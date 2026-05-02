@@ -13,6 +13,14 @@ type KanbanColumnProps = {
   onDeleteCard: (columnId: string, cardId: string) => void;
 };
 
+const colorMap: Record<string, { accent: string; bg: string; border: string }> = {
+  todo: { accent: "#209dd7", bg: "from-blue-50", border: "border-blue-200/50" },
+  inprogress: { accent: "#ecad0a", bg: "from-amber-50", border: "border-amber-200/50" },
+  inreview: { accent: "#753991", bg: "from-purple-50", border: "border-purple-200/50" },
+  done: { accent: "#10b981", bg: "from-emerald-50", border: "border-emerald-200/50" },
+  backlog: { accent: "#888888", bg: "from-gray-50", border: "border-gray-200/50" },
+};
+
 export const KanbanColumn = ({
   column,
   cards,
@@ -21,33 +29,43 @@ export const KanbanColumn = ({
   onDeleteCard,
 }: KanbanColumnProps) => {
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
+  const colorConfig = colorMap[column.id] || colorMap.todo;
 
   return (
     <section
       ref={setNodeRef}
       className={clsx(
-        "flex min-h-[520px] flex-col rounded-3xl border border-[var(--stroke)] bg-[var(--surface-strong)] p-4 shadow-[var(--shadow)] transition",
-        isOver && "ring-2 ring-[var(--accent-yellow)]"
+        "flex min-h-[580px] flex-col rounded-2xl border bg-gradient-to-b transition-all duration-200",
+        `${colorConfig.bg} to-white`,
+        colorConfig.border,
+        "shadow-sm hover:shadow-md",
+        isOver && "ring-2 ring-[var(--accent-yellow)] shadow-lg scale-105"
       )}
       data-testid={`column-${column.id}`}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="w-full">
-          <div className="flex items-center gap-3">
-            <div className="h-2 w-10 rounded-full bg-[var(--accent-yellow)]" />
-            <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--gray-text)]">
-              {cards.length} cards
+      {/* Column Header */}
+      <div className="space-y-4 border-b border-[var(--stroke)]/20 px-5 py-4">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5">
+            <div 
+              className="h-3 w-3 rounded-full" 
+              style={{ backgroundColor: colorConfig.accent }}
+            />
+            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--gray-text)]">
+              {cards.length} {cards.length === 1 ? "card" : "cards"}
             </span>
           </div>
-          <input
-            value={column.title}
-            onChange={(event) => onRename(column.id, event.target.value)}
-            className="mt-3 w-full bg-transparent font-display text-lg font-semibold text-[var(--navy-dark)] outline-none"
-            aria-label="Column title"
-          />
         </div>
+        <input
+          value={column.title}
+          onChange={(event) => onRename(column.id, event.target.value)}
+          className="w-full bg-transparent font-display text-lg font-bold text-[var(--navy-dark)] outline-none hover:text-[var(--primary-blue)] transition"
+          aria-label="Column title"
+        />
       </div>
-      <div className="mt-4 flex flex-1 flex-col gap-3">
+
+      {/* Cards Container */}
+      <div className="mt-2 flex flex-1 flex-col gap-3 overflow-y-auto px-4 py-3">
         <SortableContext items={column.cardIds} strategy={verticalListSortingStrategy}>
           {cards.map((card) => (
             <KanbanCard
@@ -58,14 +76,18 @@ export const KanbanColumn = ({
           ))}
         </SortableContext>
         {cards.length === 0 && (
-          <div className="flex flex-1 items-center justify-center rounded-2xl border border-dashed border-[var(--stroke)] px-3 py-6 text-center text-xs font-semibold uppercase tracking-[0.2em] text-[var(--gray-text)]">
-            Drop a card here
+          <div className="flex flex-1 items-center justify-center rounded-xl border-2 border-dashed border-[var(--stroke)]/40 px-3 py-6 text-center text-xs font-semibold uppercase tracking-wide text-[var(--gray-text)]">
+            Drop cards here
           </div>
         )}
       </div>
-      <NewCardForm
-        onAdd={(title, details) => onAddCard(column.id, title, details)}
-      />
+
+      {/* Add Card Form */}
+      <div className="border-t border-[var(--stroke)]/20 px-4 py-3">
+        <NewCardForm
+          onAdd={(title, details) => onAddCard(column.id, title, details)}
+        />
+      </div>
     </section>
   );
 };
