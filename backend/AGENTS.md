@@ -12,6 +12,13 @@ FastAPI app: SQLite persistence (Kanban schema + MVP seed), cookie-based session
 | `db.py` | `db_path`, `get_connection`, `init_db` (`CREATE TABLE IF NOT EXISTS`, indexes, MVP user + empty default board + five columns) |
 | `session_token.py` | Signed session cookie payload (`itsdangerous`), `AUTH_SECRET` |
 | `routes/auth.py` | `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me` |
+| `routes/boards.py` | `GET/PUT /api/boards`, `GET /api/boards/{id}` (composite payload) |
+| `routes/columns.py` | `PUT /api/columns/{id}` (rename) |
+| `routes/cards.py` | `POST /api/cards`, `PUT /api/cards/{id}`, `DELETE ...`, `PUT .../move` |
+| `deps.py` | `get_current_user` cookie session (protected routes) |
+| `models.py` | Pydantic request/response bodies |
+| `kanban_access.py` | Ownership lookups, column renumber, card move |
+| `seeds.py` | MVP user + default board columns |
 
 ## Environment
 
