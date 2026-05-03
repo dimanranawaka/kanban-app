@@ -69,3 +69,33 @@ export async function renameBoardColumn(columnId: number, name: string) {
   if (!res.ok) throw new Error("Failed to rename column");
   return res.json();
 }
+
+export async function testAiConnection() {
+  const res = await fetch(apiUrl("/api/ai/test"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error("Failed to connect to AI");
+  return res.json();
+}
+
+export async function sendChatMessage(boardId: number, message: string) {
+  const res = await fetch(apiUrl("/api/ai/chat"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ board_id: boardId, message }),
+  });
+  if (!res.ok) throw new Error("Failed to send message to AI");
+  return res.json();
+}
+
+export async function getChatHistory(boardId: number) {
+  const res = await fetch(apiUrl(`/api/ai/chat/${boardId}`), {
+    method: "GET",
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error("Failed to load chat history");
+  return res.json();
+}

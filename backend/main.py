@@ -10,6 +10,7 @@ from backend.routes.auth import router as auth_router
 from backend.routes.boards import router as boards_router
 from backend.routes.cards import router as cards_router
 from backend.routes.columns import router as columns_router
+from backend.routes.ai import router as ai_router
 
 
 @asynccontextmanager
@@ -24,6 +25,7 @@ app.include_router(auth_router)
 app.include_router(boards_router)
 app.include_router(columns_router)
 app.include_router(cards_router)
+app.include_router(ai_router, prefix="/api/ai")
 
 
 @app.get("/api/health")
@@ -42,5 +44,14 @@ if os.path.isdir(frontend_dir):
         if not os.path.isfile(login_html):
             raise HTTPException(status_code=404)
         return FileResponse(login_html)
+
+    ai_test_html = os.path.join(frontend_dir, "ai-test.html")
+
+    @app.get("/ai-test")
+    @app.get("/ai-test/")
+    async def serve_ai_test_page():
+        if not os.path.isfile(ai_test_html):
+            raise HTTPException(status_code=404)
+        return FileResponse(ai_test_html)
 
     app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")

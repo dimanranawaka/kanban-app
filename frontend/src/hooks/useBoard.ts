@@ -180,5 +180,7 @@ export function useBoard() {
     addCard,
     deleteCard,
     moveCard,
+    loadBoard,
+    boardId,
   };
 }

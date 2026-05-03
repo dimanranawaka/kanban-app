@@ -13,6 +13,7 @@ import {
 } from "@dnd-kit/core";
 import { KanbanColumn } from "@/components/KanbanColumn";
 import { KanbanCardPreview } from "@/components/KanbanCardPreview";
+import ChatSidebar from "@/components/ChatSidebar";
 import { logout } from "@/lib/auth";
 import { useBoard } from "@/hooks/useBoard";
 
@@ -25,6 +26,8 @@ export const KanbanBoard = () => {
     addCard,
     deleteCard,
     moveCard,
+    loadBoard,
+    boardId,
   } = useBoard();
 
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
@@ -191,6 +194,8 @@ export const KanbanBoard = () => {
           </DragOverlay>
         </DndContext>
       </main>
+      
+      {boardId && <ChatSidebar boardId={boardId} onBoardUpdate={loadBoard} />}
     </div>
   );
 };
