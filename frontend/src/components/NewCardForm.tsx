@@ -23,14 +23,14 @@ export const NewCardForm = ({ onAdd }: NewCardFormProps) => {
   return (
     <div>
       {isOpen ? (
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-3 p-3 bg-white/50 rounded-lg border border-[var(--stroke)]/30">
           <input
             value={formState.title}
             onChange={(event) =>
               setFormState((prev) => ({ ...prev, title: event.target.value }))
             }
-            placeholder="Card title"
-            className="w-full rounded-lg border border-[var(--stroke)] bg-white px-3 py-2 text-sm font-medium text-[var(--navy-dark)] placeholder-[var(--gray-text)] outline-none transition focus:border-[var(--primary-blue)] focus:ring-2 focus:ring-[var(--primary-blue)]/20"
+            placeholder="Card title..."
+            className="w-full rounded-lg border border-[var(--stroke)] bg-white px-3 py-2 text-sm font-semibold text-[var(--navy-dark)] placeholder-[var(--gray-text)]/50 outline-none transition focus:border-[var(--primary-blue)] focus:ring-2 focus:ring-[var(--primary-blue)]/20"
             required
             autoFocus
           />
@@ -41,14 +41,14 @@ export const NewCardForm = ({ onAdd }: NewCardFormProps) => {
             }
             placeholder="Add details..."
             rows={2}
-            className="w-full resize-none rounded-lg border border-[var(--stroke)] bg-white px-3 py-2 text-sm text-[var(--gray-text)] placeholder-[var(--gray-text)]/50 outline-none transition focus:border-[var(--primary-blue)] focus:ring-2 focus:ring-[var(--primary-blue)]/20"
+            className="w-full resize-none rounded-lg border border-[var(--stroke)] bg-white px-3 py-2 text-xs text-[var(--gray-text)] placeholder-[var(--gray-text)]/50 outline-none transition focus:border-[var(--primary-blue)] focus:ring-2 focus:ring-[var(--primary-blue)]/20"
           />
           <div className="flex items-center gap-2 pt-1">
             <button
               type="submit"
-              className="flex-1 rounded-lg bg-[var(--secondary-purple)] px-3 py-2 text-xs font-semibold uppercase tracking-wider text-white transition hover:brightness-110 active:scale-95"
+              className="flex-1 rounded-lg bg-[var(--secondary-purple)] px-3 py-2 text-xs font-bold uppercase tracking-wider text-white transition hover:brightness-110 active:scale-95"
             >
-              Add card
+              Add
             </button>
             <button
               type="button"
@@ -66,9 +66,9 @@ export const NewCardForm = ({ onAdd }: NewCardFormProps) => {
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="w-full rounded-lg border-2 border-dashed border-[var(--stroke)]/50 px-3 py-3 text-xs font-semibold uppercase tracking-wider text-[var(--primary-blue)] transition hover:border-[var(--primary-blue)] hover:bg-blue-50/50"
+          className="w-full rounded-lg border-2 border-dashed border-[var(--stroke)]/40 px-3 py-3 text-xs font-semibold uppercase tracking-wider text-[var(--primary-blue)] transition hover:border-[var(--primary-blue)]/60 hover:bg-blue-50/30"
         >
-          + Add a card
+          + Add card
         </button>
       )}
     </div>
