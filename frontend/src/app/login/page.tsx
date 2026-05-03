@@ -2,30 +2,30 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { KanbanBoard } from '@/components/KanbanBoard';
+import LoginPage from '@/components/LoginPage';
 import { fetchMe } from '@/lib/auth';
 
-export default function Home() {
+export default function LoginRoute() {
   const router = useRouter();
-  const [ready, setReady] = useState(false);
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       const me = await fetchMe();
       if (cancelled) return;
-      if (!me) {
-        router.replace('/login');
+      if (me) {
+        router.replace('/');
         return;
       }
-      setReady(true);
+      setChecking(false);
     })();
     return () => {
       cancelled = true;
     };
   }, [router]);
 
-  if (!ready) {
+  if (checking) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[var(--surface)] to-[var(--surface-strong)]">
         <div className="text-center">
@@ -36,5 +36,5 @@ export default function Home() {
     );
   }
 
-  return <KanbanBoard />;
+  return <LoginPage />;
 }

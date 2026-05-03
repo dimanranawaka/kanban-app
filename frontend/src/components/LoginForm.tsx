@@ -1,12 +1,15 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
+import { login } from '@/lib/auth';
 
 interface LoginFormProps {
   onLoginSuccess?: () => void;
 }
 
 export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
+  const router = useRouter();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -17,15 +20,13 @@ export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
     setError('');
     setIsLoading(true);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    if (username === 'user' && password === 'password') {
-      localStorage.setItem('auth_token', 'user-token-' + Date.now());
-      // Force a full page reload to ensure state is synced
-      window.location.href = '/';
-    } else {
-      setError('Invalid username or password');
+    try {
+      await login(username, password);
+      onLoginSuccess?.();
+      router.replace('/');
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed');
       setIsLoading(false);
     }
   };
@@ -38,6 +39,7 @@ export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
         </label>
         <input
           id="username"
+          name="username"
           type="text"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
@@ -45,6 +47,7 @@ export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
           className="w-full px-4 py-3 rounded-lg border border-[#888888]/30 bg-white text-[#032147] placeholder-[#888888]/50 outline-none transition focus:border-[#209dd7] focus:ring-2 focus:ring-[#209dd7]/20"
           required
           disabled={isLoading}
+          autoComplete="username"
         />
       </div>
 
@@ -54,6 +57,7 @@ export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
         </label>
         <input
           id="password"
+          name="password"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -61,6 +65,7 @@ export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
           className="w-full px-4 py-3 rounded-lg border border-[#888888]/30 bg-white text-[#032147] placeholder-[#888888]/50 outline-none transition focus:border-[#209dd7] focus:ring-2 focus:ring-[#209dd7]/20"
           required
           disabled={isLoading}
+          autoComplete="current-password"
         />
       </div>
 

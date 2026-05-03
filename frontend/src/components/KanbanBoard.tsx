@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   DndContext,
   DragOverlay,
@@ -15,9 +14,9 @@ import {
 import { KanbanColumn } from "@/components/KanbanColumn";
 import { KanbanCardPreview } from "@/components/KanbanCardPreview";
 import { createId, initialData, moveCard, type BoardData } from "@/lib/kanban";
+import { logout } from "@/lib/auth";
 
 export const KanbanBoard = () => {
-  const router = useRouter();
   const [board, setBoard] = useState<BoardData>(() => initialData);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
 
@@ -92,8 +91,7 @@ export const KanbanBoard = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('auth_token');
-    window.location.href = '/';
+    void logout();
   };
 
   const activeCard = activeCardId ? cardsById[activeCardId] : null;

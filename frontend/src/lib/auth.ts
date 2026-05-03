@@ -1,35 +1,49 @@
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { apiUrl } from '@/lib/api';
 
-export function useAuth() {
-  const router = useRouter();
+export type MeResponse = {
+  user_id: number;
+  username: string;
+};
 
-  useEffect(() => {
-    const token = localStorage.getItem('auth_token');
-    if (!token) {
-      router.push('/login');
-    }
-  }, [router]);
+export async function fetchMe(): Promise<MeResponse | null> {
+  try {
+    const response = await fetch(apiUrl('/api/auth/me'), { credentials: 'include' });
+    if (!response.ok) return null;
+    return response.json();
+  } catch {
+    return null;
+  }
 }
 
-export async function login(username: string, password: string) {
-  const response = await fetch('/api/auth/login', {
+export async function login(username: string, password: string): Promise<MeResponse> {
+  const response = await fetch(apiUrl('/api/auth/login'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify({ username, password }),
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.detail || 'Login failed');
+    let detail = 'Login failed';
+    try {
+      const err = await response.json();
+      if (typeof err.detail === 'string') detail = err.detail;
+    } catch {
+      /* ignore */
+    }
+    throw new Error(detail);
   }
 
-  const data = await response.json();
-  localStorage.setItem('auth_token', data.token);
-  return data;
+  const me = await fetchMe();
+  if (!me) throw new Error('Login succeeded but session could not be verified.');
+  return me;
 }
 
-export async function logout() {
-  localStorage.removeItem('auth_token');
+export async function logout(): Promise<void> {
+  try {
+    await fetch(apiUrl('/api/auth/logout'), { method: 'POST', credentials: 'include' });
+  } catch {
+    /* still navigate away */
+  }
   window.location.href = '/login';
 }

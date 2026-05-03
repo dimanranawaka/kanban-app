@@ -1,5 +1,17 @@
 import { expect, test } from "@playwright/test";
 
+async function logIn(page: import("@playwright/test").Page) {
+  await page.goto("/login");
+  await page.getByLabel("Username").fill("user");
+  await page.getByLabel("Password").fill("password");
+  await page.getByRole("button", { name: /log in/i }).click();
+  await expect(page.getByText("Kanban Board")).toBeVisible();
+}
+
+test.beforeEach(async ({ page }) => {
+  await logIn(page);
+});
+
 test("loads the kanban board", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Kanban Studio" })).toBeVisible();
@@ -9,10 +21,10 @@ test("loads the kanban board", async ({ page }) => {
 test("adds a card to a column", async ({ page }) => {
   await page.goto("/");
   const firstColumn = page.locator('[data-testid^="column-"]').first();
-  await firstColumn.getByRole("button", { name: /add a card/i }).click();
-  await firstColumn.getByPlaceholder("Card title").fill("Playwright card");
-  await firstColumn.getByPlaceholder("Details").fill("Added via e2e.");
-  await firstColumn.getByRole("button", { name: /add card/i }).click();
+  await firstColumn.getByRole("button", { name: "+ Add card" }).click();
+  await firstColumn.getByPlaceholder(/card title/i).fill("Playwright card");
+  await firstColumn.getByPlaceholder(/details/i).fill("Added via e2e.");
+  await firstColumn.getByRole("button", { name: /^add$/i }).click();
   await expect(firstColumn.getByText("Playwright card")).toBeVisible();
 });
 
