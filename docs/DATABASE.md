@@ -3,6 +3,18 @@
 ## Overview
 The Kanban application uses SQLite as its local database. The schema is designed to support multiple users, each with their own Kanban board containing columns and cards.
 
+## Implementation (MVP)
+
+| Item | Location |
+|------|----------|
+| Connection, `CREATE TABLE IF NOT EXISTS`, indexes, MVP seed | `backend/db.py` (`init_db`, `get_connection`, `db_path`) |
+| When it runs | FastAPI lifespan in `backend/main.py` before requests |
+| Database file | `KANBAN_DB_PATH` env (Docker: `/app/data/kanban.db`; otherwise `./data/kanban.db` under repo root) |
+
+**Seed behavior:** On first startup, `users` gets row `username = "user"` (fixed id `1` via `INSERT OR IGNORE`) if missing. If that user has no board, one board is created (`title` defaults to `My Project`) with five columns in order: To Do, In Progress, In Review, Done, Backlog (positions `0`–`4`). No sample cards are inserted; the UI remains empty until Part 7 persists cards via API.
+
+**IDs:** Tables use integer primary keys. The frontend demo historically used string ids (`card-1`, etc.); API integration (Part 7) will map DB integers to whatever shape the UI needs.
+
 ## Data Model
 
 ### Tables
@@ -86,7 +98,7 @@ CREATE TABLE kanban_columns (
 **Cascade:** If board is deleted, all columns are deleted
 
 **Constraints:**
-- `(board_id, position)` should be unique to prevent duplicate positions
+- `UNIQUE (board_id, position)` enforces one column per slot per board
 
 ---
 
@@ -132,14 +144,14 @@ users (1) ─── (many) kanban_boards
 
 kanban_boards (1) ─── (many) kanban_columns
   |
-  └─ board_id (FK to users)
+  └─ user_id on boards links to users(id); columns reference boards(id)
 
 kanban_columns (1) ─── (many) kanban_cards
   |
-  └─ column_id (FK to kanban_boards)
+  └─ column_id on cards links to kanban_columns(id)
 
 kanban_cards
-  └─ card_id (FK to kanban_columns)
+  └─ Belongs to exactly one kanban_column
 ```
 
 ## Data Flow
@@ -170,39 +182,49 @@ kanban_cards
 
 ## Migration Strategy
 
-The backend will implement auto-migration on startup:
-1. Check if database exists
-2. If not, create all tables with proper schema
-3. For new users, auto-create default board with 5 columns
-4. Initialize with empty columns ready for cards
+MVP strategy (implemented in `backend/db.py`):
+
+1. Open SQLite at `KANBAN_DB_PATH` (create parent directory if needed).
+2. Run a single `executescript` with `CREATE TABLE IF NOT EXISTS` and `CREATE INDEX IF NOT EXISTS` so restarts are idempotent.
+3. Run MVP seed: ensure user `user` exists and, if they have no board yet, insert one board plus five default columns (no cards).
+
+**Future schema changes:** Prefer incremental steps: bump a `PRAGMA user_version` (or a tiny `schema_meta` table), run `ALTER TABLE` / new indexes inside guarded branches, never drop tables in production without a backup. For MVP, additive columns can wait until a migration helper is introduced.
 
 ## API Response Formats
 
-### Board Response
+These shapes document the intended JSON contract for Part 6/7. Storage remains normalized in SQLite; the API may denormalize for the client.
+
+### Row-level models
+
+**Board (board row only)**
+
 ```json
 {
   "id": 1,
   "user_id": 1,
   "title": "My Project",
-  "columns": [...],
-  "cards": {...},
   "created_at": "2026-05-03T10:00:00Z",
   "updated_at": "2026-05-03T12:00:00Z"
 }
 ```
 
-### Column Response
+**Column**
+
 ```json
 {
   "id": 1,
   "board_id": 1,
   "name": "To Do",
   "position": 0,
+  "created_at": "2026-05-03T10:00:00Z",
   "card_count": 5
 }
 ```
 
-### Card Response
+`card_count` is optional computed metadata for list endpoints.
+
+**Card**
+
 ```json
 {
   "id": 1,
@@ -214,6 +236,59 @@ The backend will implement auto-migration on startup:
   "updated_at": "2026-05-03T12:00:00Z"
 }
 ```
+
+### Composite board payload (single GET for the Kanban UI)
+
+Ordered columns; each column lists card ids in display order. Cards are a map by string id (JSON keys are strings) for O(1) lookup and alignment with a client `Record<id, Card>` shape.
+
+```json
+{
+  "id": 1,
+  "user_id": 1,
+  "title": "My Project",
+  "created_at": "2026-05-03T10:00:00Z",
+  "updated_at": "2026-05-03T12:00:00Z",
+  "columns": [
+    {
+      "id": 1,
+      "name": "To Do",
+      "position": 0,
+      "card_ids": ["1", "2"]
+    },
+    {
+      "id": 2,
+      "name": "In Progress",
+      "position": 1,
+      "card_ids": ["3"]
+    }
+  ],
+  "cards": {
+    "1": {
+      "id": "1",
+      "title": "Design homepage",
+      "description": "Mockups and copy",
+      "column_id": 1,
+      "position": 0
+    },
+    "2": {
+      "id": "2",
+      "title": "Plan palette",
+      "description": null,
+      "column_id": 1,
+      "position": 1
+    },
+    "3": {
+      "id": "3",
+      "title": "Wire API",
+      "description": "Board CRUD",
+      "column_id": 2,
+      "position": 0
+    }
+  }
+}
+```
+
+Card `id` in JSON may stay as stringified integers until the client is unified on numeric ids.
 
 ## Indexes for Performance
 

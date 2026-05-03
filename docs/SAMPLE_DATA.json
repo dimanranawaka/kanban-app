@@ -1,5 +1,6 @@
 {
   "description": "Sample Kanban Board Data",
+  "usage_note": "Illustrates relational rows matching docs/DATABASE.md. The running MVP seeds username \"user\" with one board titled \"My Project\", five columns (To Do through Backlog), and no cards until APIs persist them.",
   "users": [
     {
       "id": 1,
