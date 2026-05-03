@@ -39,6 +39,30 @@ export async function login(username: string, password: string): Promise<MeRespo
   return me;
 }
 
+export async function signup(username: string, password: string): Promise<MeResponse> {
+  const response = await fetch(apiUrl('/api/auth/signup'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ username, password }),
+  });
+
+  if (!response.ok) {
+    let detail = 'Signup failed';
+    try {
+      const err = await response.json();
+      if (typeof err.detail === 'string') detail = err.detail;
+    } catch {
+      /* ignore */
+    }
+    throw new Error(detail);
+  }
+
+  const me = await fetchMe();
+  if (!me) throw new Error('Signup succeeded but session could not be verified.');
+  return me;
+}
+
 export async function logout(): Promise<void> {
   try {
     await fetch(apiUrl('/api/auth/logout'), { method: 'POST', credentials: 'include' });

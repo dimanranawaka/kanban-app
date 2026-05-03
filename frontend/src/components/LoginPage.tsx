@@ -23,12 +23,7 @@ export default function LoginPage() {
             <p className="text-[#888888]">Organize your workflow with style</p>
           </div>
           <LoginForm />
-          <div className="bg-[#209dd7]/10 border border-[#209dd7]/30 rounded-lg px-4 py-3 text-center">
-            <p className="text-xs text-[#888888] mb-2">Demo credentials</p>
-            <p className="text-sm font-mono font-semibold text-[#032147]">user / password</p>
-          </div>
         </div>
-        <p className="text-center text-white/60 text-xs mt-8">This is a demo app. Use the credentials above to log in.</p>
       </div>
     </div>
   );

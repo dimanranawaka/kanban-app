@@ -32,6 +32,7 @@ def init_db() -> None:
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 username TEXT UNIQUE NOT NULL,
+                password_hash TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
@@ -82,6 +83,12 @@ def init_db() -> None:
             """
         )
         conn.commit()
+        try:
+            conn.execute("ALTER TABLE users ADD COLUMN password_hash TEXT")
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass
+
         seed_mvp_user_and_default_board(conn)
         conn.commit()
     finally:
