@@ -17,6 +17,25 @@ export function useBoard() {
   const [error, setError] = useState<Error | null>(null);
   const [boardId, setBoardId] = useState<number | null>(null);
 
+  const updateBoard = useCallback((detail: any) => {
+    const mappedColumns: Column[] = detail.columns.map((c: any) => ({
+      id: `col-${c.id}`,
+      title: c.name,
+      cardIds: c.card_ids.map((id: string) => `card-${id}`),
+    }));
+
+    const mappedCards: Record<string, Card> = {};
+    for (const [id, c] of Object.entries(detail.cards) as any) {
+      mappedCards[`card-${id}`] = {
+        id: `card-${id}`,
+        title: c.title,
+        details: c.description || "",
+      };
+    }
+
+    setBoardData({ columns: mappedColumns, cards: mappedCards });
+  }, []);
+
   const loadBoard = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -29,24 +48,7 @@ export function useBoard() {
       setBoardId(firstBoardId);
 
       const detail = await fetchBoardDetail(firstBoardId);
-
-      // Map API payload to frontend BoardData
-      const mappedColumns: Column[] = detail.columns.map((c: any) => ({
-        id: `col-${c.id}`,
-        title: c.name,
-        cardIds: c.card_ids.map((id: string) => `card-${id}`),
-      }));
-
-      const mappedCards: Record<string, Card> = {};
-      for (const [id, c] of Object.entries(detail.cards) as any) {
-        mappedCards[`card-${id}`] = {
-          id: `card-${id}`,
-          title: c.title,
-          details: c.description || "",
-        };
-      }
-
-      setBoardData({ columns: mappedColumns, cards: mappedCards });
+      updateBoard(detail);
     } catch (err: any) {
       console.error(err);
       setError(err);
@@ -181,6 +183,7 @@ export function useBoard() {
     deleteCard,
     moveCard,
     loadBoard,
+    updateBoard,
     boardId,
   };
 }

@@ -27,6 +27,20 @@ async def get_chat_history(board_id: int, user: CurrentUser):
     finally:
         conn.close()
 
+@router.delete("/chat/{board_id}")
+async def clear_chat_history(board_id: int, user: CurrentUser):
+    conn = get_connection()
+    try:
+        board = conn.execute("SELECT id FROM kanban_boards WHERE id = ? AND user_id = ?", (board_id, user.user_id)).fetchone()
+        if not board:
+            raise HTTPException(status_code=404, detail="Board not found")
+
+        conn.execute("DELETE FROM chat_history WHERE board_id = ?", (board_id,))
+        conn.commit()
+        return {"ok": True}
+    finally:
+        conn.close()
+
 @router.post("/chat")
 async def chat_endpoint(payload: ChatMessagePayload, user: CurrentUser):
     conn = get_connection()

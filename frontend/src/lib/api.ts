@@ -99,3 +99,12 @@ export async function getChatHistory(boardId: number) {
   if (!res.ok) throw new Error("Failed to load chat history");
   return res.json();
 }
+
+export async function clearChatHistory(boardId: number) {
+  const res = await fetch(apiUrl(`/api/ai/chat/${boardId}`), {
+    method: "DELETE",
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error("Failed to clear chat history");
+  return res.json();
+}

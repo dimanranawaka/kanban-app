@@ -26,7 +26,7 @@ export const KanbanBoard = () => {
     addCard,
     deleteCard,
     moveCard,
-    loadBoard,
+    updateBoard,
     boardId,
   } = useBoard();
 
@@ -195,7 +195,7 @@ export const KanbanBoard = () => {
         </DndContext>
       </main>
       
-      {boardId && <ChatSidebar boardId={boardId} onBoardUpdate={loadBoard} />}
+      {boardId && <ChatSidebar boardId={boardId} onBoardUpdate={updateBoard} />}
     </div>
   );
 };

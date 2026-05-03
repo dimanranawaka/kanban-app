@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { getChatHistory, sendChatMessage } from "@/lib/api";
+import { getChatHistory, sendChatMessage, clearChatHistory } from "@/lib/api";
 
 type Message = {
   role: "user" | "assistant";
@@ -31,6 +31,15 @@ export default function ChatSidebar({ boardId, onBoardUpdate }: { boardId: numbe
       setMessages(history);
     } catch (err) {
       console.error("Failed to load history", err);
+    }
+  };
+
+  const handleClear = async () => {
+    try {
+      await clearChatHistory(boardId);
+      setMessages([]);
+    } catch (err) {
+      console.error("Failed to clear history", err);
     }
   };
 
@@ -77,6 +86,12 @@ export default function ChatSidebar({ boardId, onBoardUpdate }: { boardId: numbe
             <span className="text-xl">🤖</span>
             <h3 className="font-display font-bold text-[var(--navy-dark)]">AI Assistant</h3>
           </div>
+          <button
+            onClick={handleClear}
+            className="text-xs font-semibold text-[var(--gray-text)] hover:text-red-500 transition-colors"
+          >
+            Clear
+          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50">
