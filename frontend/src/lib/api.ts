@@ -4,3 +4,68 @@ export function apiUrl(path: string): string {
   const p = path.startsWith("/") ? path : `/${path}`;
   return `${base}${p}`;
 }
+
+export async function fetchBoards() {
+  const res = await fetch(apiUrl("/api/boards"), { credentials: "include" });
+  if (!res.ok) throw new Error("Failed to fetch boards");
+  return res.json();
+}
+
+export async function fetchBoardDetail(boardId: number) {
+  const res = await fetch(apiUrl(`/api/boards/${boardId}`), { credentials: "include" });
+  if (!res.ok) throw new Error("Failed to fetch board details");
+  return res.json();
+}
+
+export async function createCard(columnId: number, title: string, description: string = "") {
+  const res = await fetch(apiUrl("/api/cards"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ column_id: columnId, title, description }),
+  });
+  if (!res.ok) throw new Error("Failed to create card");
+  return res.json();
+}
+
+export async function updateCard(cardId: number, title?: string, description?: string) {
+  const res = await fetch(apiUrl(`/api/cards/${cardId}`), {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ title, description }),
+  });
+  if (!res.ok) throw new Error("Failed to update card");
+  return res.json();
+}
+
+export async function moveCardTo(cardId: number, columnId: number, position: number) {
+  const res = await fetch(apiUrl(`/api/cards/${cardId}/move`), {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ column_id: columnId, position }),
+  });
+  if (!res.ok) throw new Error("Failed to move card");
+  return res.json();
+}
+
+export async function removeCard(cardId: number) {
+  const res = await fetch(apiUrl(`/api/cards/${cardId}`), {
+    method: "DELETE",
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error("Failed to delete card");
+  return res.json();
+}
+
+export async function renameBoardColumn(columnId: number, name: string) {
+  const res = await fetch(apiUrl(`/api/columns/${columnId}`), {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ name }),
+  });
+  if (!res.ok) throw new Error("Failed to rename column");
+  return res.json();
+}

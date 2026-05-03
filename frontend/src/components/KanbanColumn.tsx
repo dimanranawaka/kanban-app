@@ -62,7 +62,8 @@ export const KanbanColumn = ({
   onDeleteCard,
 }: KanbanColumnProps) => {
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
-  const colorConfig = colorMap[column.id] || colorMap.todo;
+  const normalizedTitle = column.title.toLowerCase().replace(/\s/g, '');
+  const colorConfig = colorMap[normalizedTitle] || colorMap.todo;
 
   return (
     <section

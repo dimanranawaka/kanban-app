@@ -1,6 +1,61 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { KanbanBoard } from "@/components/KanbanBoard";
+import { vi } from "vitest";
+import { initialData, createId } from "@/lib/kanban";
+import React, { useState } from "react";
+
+vi.mock("@/hooks/useBoard", () => {
+  return {
+    useBoard: () => {
+      const [boardData, setBoardData] = useState(initialData);
+
+      const renameColumn = (columnId: string, title: string) => {
+        setBoardData((prev) => ({
+          ...prev,
+          columns: prev.columns.map((c) => (c.id === columnId ? { ...c, title } : c)),
+        }));
+      };
+
+      const addCard = (columnId: string, title: string, details: string) => {
+        const newId = createId("card");
+        setBoardData((prev) => ({
+          cards: { ...prev.cards, [newId]: { id: newId, title, details } },
+          columns: prev.columns.map((c) =>
+            c.id === columnId ? { ...c, cardIds: [...c.cardIds, newId] } : c
+          ),
+        }));
+      };
+
+      const deleteCard = (columnId: string, cardId: string) => {
+        setBoardData((prev) => {
+          const nextCards = { ...prev.cards };
+          delete nextCards[cardId];
+          return {
+            cards: nextCards,
+            columns: prev.columns.map((c) =>
+              c.id === columnId
+                ? { ...c, cardIds: c.cardIds.filter((id) => id !== cardId) }
+                : c
+            ),
+          };
+        });
+      };
+
+      const moveCard = () => {};
+
+      return {
+        boardData,
+        isLoading: false,
+        error: null,
+        renameColumn,
+        addCard,
+        deleteCard,
+        moveCard,
+      };
+    },
+  };
+});
 
 const getFirstColumn = () => screen.getAllByTestId(/column-/i)[0];
 
