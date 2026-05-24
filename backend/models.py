@@ -20,13 +20,13 @@ class ColumnRename(BaseModel):
 class CardCreate(BaseModel):
     column_id: int
     title: str = Field(min_length=1, max_length=500)
-    description: str | None = None
+    description: str | None = Field(default=None, max_length=10000)
     position: int | None = Field(default=None, ge=0)
 
 
 class CardUpdate(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=500)
-    description: str | None = None
+    description: str | None = Field(default=None, max_length=10000)
 
 
 class CardMove(BaseModel):

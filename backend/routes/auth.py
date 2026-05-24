@@ -1,3 +1,4 @@
+import os
 import sqlite3
 from fastapi import APIRouter, HTTPException, Request, Response
 from pydantic import BaseModel
@@ -31,8 +32,8 @@ async def signup(body: AuthBody, response: Response):
             raise HTTPException(status_code=400, detail="Username already taken")
 
         hashed = bcrypt.hashpw(body.password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-        conn.execute("INSERT INTO users (username, password_hash) VALUES (?, ?)", (username, hashed))
-        user_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+        cursor = conn.execute("INSERT INTO users (username, password_hash) VALUES (?, ?)", (username, hashed))
+        user_id = cursor.lastrowid
         
         # Create a default board for the new user
         create_default_board(conn, user_id)
@@ -40,12 +41,14 @@ async def signup(body: AuthBody, response: Response):
     finally:
         conn.close()
 
+    _SECURE = os.environ.get("ENV") == "production"
     token = create_session_token(user_id, username)
     response.set_cookie(
         key=AUTH_COOKIE,
         value=token,
         httponly=True,
         samesite="lax",
+        secure=_SECURE,
         max_age=7 * 24 * 60 * 60,
         path="/",
     )
@@ -58,20 +61,22 @@ async def login(body: AuthBody, response: Response):
         row = conn.execute("SELECT id, password_hash FROM users WHERE username = ?", (body.username,)).fetchone()
         if not row or not row["password_hash"]:
             raise HTTPException(status_code=401, detail="Invalid username or password")
-            
+
         if not bcrypt.checkpw(body.password.encode('utf-8'), row["password_hash"].encode('utf-8')):
             raise HTTPException(status_code=401, detail="Invalid username or password")
-            
+
         user_id = int(row["id"])
     finally:
         conn.close()
 
+    _SECURE = os.environ.get("ENV") == "production"
     token = create_session_token(user_id, body.username)
     response.set_cookie(
         key=AUTH_COOKIE,
         value=token,
         httponly=True,
         samesite="lax",
+        secure=_SECURE,
         max_age=7 * 24 * 60 * 60,
         path="/",
     )

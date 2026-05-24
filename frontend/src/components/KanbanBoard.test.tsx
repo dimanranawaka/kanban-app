@@ -2,13 +2,27 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { vi } from "vitest";
-import { initialData, createId } from "@/lib/kanban";
+import type { BoardData } from "@/lib/kanban";
 import React, { useState } from "react";
+
+const testData: BoardData = {
+  columns: [
+    { id: "col-1", title: "To Do", cardIds: [] },
+    { id: "col-2", title: "In Progress", cardIds: [] },
+    { id: "col-3", title: "In Review", cardIds: [] },
+    { id: "col-4", title: "Done", cardIds: [] },
+    { id: "col-5", title: "Backlog", cardIds: [] },
+  ],
+  cards: {},
+};
+
+let _uid = 0;
+const makeId = () => `card-test-${++_uid}`;
 
 vi.mock("@/hooks/useBoard", () => {
   return {
     useBoard: () => {
-      const [boardData, setBoardData] = useState(initialData);
+      const [boardData, setBoardData] = useState(testData);
 
       const renameColumn = (columnId: string, title: string) => {
         setBoardData((prev) => ({
@@ -18,7 +32,7 @@ vi.mock("@/hooks/useBoard", () => {
       };
 
       const addCard = (columnId: string, title: string, details: string) => {
-        const newId = createId("card");
+        const newId = makeId();
         setBoardData((prev) => ({
           cards: { ...prev.cards, [newId]: { id: newId, title, details } },
           columns: prev.columns.map((c) =>

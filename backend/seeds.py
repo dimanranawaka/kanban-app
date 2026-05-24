@@ -4,11 +4,11 @@ import bcrypt
 DEFAULT_COLUMN_NAMES = ["To Do", "In Progress", "In Review", "Done", "Backlog"]
 
 def create_default_board(conn: sqlite3.Connection, user_id: int) -> None:
-    conn.execute(
+    cursor = conn.execute(
         "INSERT INTO kanban_boards (user_id, title) VALUES (?, ?)",
         (user_id, "My Project"),
     )
-    board_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+    board_id = cursor.lastrowid
     for position, name in enumerate(DEFAULT_COLUMN_NAMES):
         conn.execute(
             """
@@ -22,11 +22,11 @@ def seed_mvp_user_and_default_board(conn: sqlite3.Connection) -> None:
     row = conn.execute("SELECT id, password_hash FROM users WHERE username = ?", ("user",)).fetchone()
     if not row:
         hashed = bcrypt.hashpw(b"password", bcrypt.gensalt()).decode("utf-8")
-        conn.execute(
+        cursor = conn.execute(
             "INSERT INTO users (username, password_hash) VALUES (?, ?)",
             ("user", hashed),
         )
-        user_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+        user_id = cursor.lastrowid
     else:
         user_id = row["id"]
         if not row["password_hash"]:

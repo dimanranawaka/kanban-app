@@ -11,6 +11,7 @@ def test_expected_tables_exist_after_init(client):
         assert "kanban_boards" in names
         assert "kanban_columns" in names
         assert "kanban_cards" in names
+        assert "chat_history" in names
     finally:
         conn.close()
 

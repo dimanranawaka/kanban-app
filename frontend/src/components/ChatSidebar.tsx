@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { getChatHistory, sendChatMessage, clearChatHistory } from "@/lib/api";
+import { getChatHistory, sendChatMessage, clearChatHistory, type BoardDetailResponse } from "@/lib/api";
 
 type Message = {
   role: "user" | "assistant";
   content: string;
 };
 
-export default function ChatSidebar({ boardId, onBoardUpdate }: { boardId: number, onBoardUpdate: (newBoard: any) => void }) {
+export default function ChatSidebar({ boardId, onBoardUpdate }: { boardId: number, onBoardUpdate: (newBoard: BoardDetailResponse) => void }) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");

@@ -16,7 +16,7 @@ services:
       - AUTH_SECRET=${AUTH_SECRET:-dev-docker-secret-change-me}
     env_file:
       - .env
-    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000
 
 volumes:
   kanban_data:

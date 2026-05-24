@@ -6,7 +6,9 @@ SESSION_MAX_AGE_SECONDS = 7 * 24 * 60 * 60
 
 
 def _serializer() -> URLSafeTimedSerializer:
-    secret = os.environ.get("AUTH_SECRET", "dev-insecure-secret-change-me")
+    secret = os.environ.get("AUTH_SECRET")
+    if not secret:
+        raise RuntimeError("AUTH_SECRET environment variable must be set")
     return URLSafeTimedSerializer(secret_key=secret, salt="kanban-auth-session")
 
 

@@ -178,7 +178,9 @@ export const KanbanBoard = () => {
               <KanbanColumn
                 key={column.id}
                 column={column}
-                cards={column.cardIds.map((cardId) => board.cards[cardId])}
+                cards={column.cardIds
+                    .map((cardId) => board.cards[cardId])
+                    .filter((c): c is NonNullable<typeof c> => c !== undefined)}
                 onRename={renameColumn}
                 onAddCard={addCard}
                 onDeleteCard={deleteCard}

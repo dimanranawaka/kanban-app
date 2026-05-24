@@ -1,3 +1,24 @@
+export type BoardDetailResponse = {
+  id: number;
+  user_id: number;
+  title: string;
+  created_at: string;
+  updated_at: string;
+  columns: Array<{
+    id: number;
+    name: string;
+    position: number;
+    card_ids: string[];
+  }>;
+  cards: Record<string, {
+    id: string;
+    title: string;
+    description: string | null;
+    column_id: number;
+    position: number;
+  }>;
+};
+
 /** Empty when the UI is served from FastAPI (same origin). For split dev servers set NEXT_PUBLIC_API_BASE. */
 export function apiUrl(path: string): string {
   const base = process.env.NEXT_PUBLIC_API_BASE ?? "";
@@ -11,7 +32,7 @@ export async function fetchBoards() {
   return res.json();
 }
 
-export async function fetchBoardDetail(boardId: number) {
+export async function fetchBoardDetail(boardId: number): Promise<BoardDetailResponse> {
   const res = await fetch(apiUrl(`/api/boards/${boardId}`), { credentials: "include" });
   if (!res.ok) throw new Error("Failed to fetch board details");
   return res.json();

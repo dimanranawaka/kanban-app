@@ -20,18 +20,30 @@ test("loads the kanban board", async ({ page }) => {
 
 test("adds a card to a column", async ({ page }) => {
   await page.goto("/");
+  const cardTitle = `E2E-card-${Date.now()}`;
   const firstColumn = page.locator('[data-testid^="column-"]').first();
   await firstColumn.getByRole("button", { name: "+ Add card" }).click();
-  await firstColumn.getByPlaceholder(/card title/i).fill("Playwright card");
+  await firstColumn.getByPlaceholder(/card title/i).fill(cardTitle);
   await firstColumn.getByPlaceholder(/details/i).fill("Added via e2e.");
   await firstColumn.getByRole("button", { name: /^add$/i }).click();
-  await expect(firstColumn.getByText("Playwright card")).toBeVisible();
+  await expect(firstColumn.getByText(cardTitle)).toBeVisible();
 });
 
 test("moves a card between columns", async ({ page }) => {
   await page.goto("/");
-  const card = page.getByTestId("card-card-1");
-  const targetColumn = page.getByTestId("column-col-review");
+
+  // Use a unique title so repeated runs don't collide on the same card name
+  const cardTitle = `Drag-${Date.now()}`;
+
+  const firstColumn = page.locator('[data-testid^="column-"]').first();
+  await firstColumn.getByRole("button", { name: "+ Add card" }).click();
+  await firstColumn.getByPlaceholder(/card title/i).fill(cardTitle);
+  await firstColumn.getByRole("button", { name: /^add$/i }).click();
+  await expect(firstColumn.getByText(cardTitle)).toBeVisible();
+
+  const card = firstColumn.locator(`[data-testid^="card-"]`).filter({ hasText: cardTitle });
+  const targetColumn = page.locator('[data-testid^="column-"]').nth(2);
+
   const cardBox = await card.boundingBox();
   const columnBox = await targetColumn.boundingBox();
   if (!cardBox || !columnBox) {
@@ -49,5 +61,6 @@ test("moves a card between columns", async ({ page }) => {
     { steps: 12 }
   );
   await page.mouse.up();
-  await expect(targetColumn.getByTestId("card-card-1")).toBeVisible();
+  // Assert the specific card landed in the target column (not a count, which is sensitive to DB state)
+  await expect(targetColumn.getByText(cardTitle)).toBeVisible();
 });

@@ -8,6 +8,7 @@ import {
   moveCardTo as apiMoveCardTo,
   removeCard as apiRemoveCard,
   renameBoardColumn as apiRenameColumn,
+  type BoardDetailResponse,
 } from "@/lib/api";
 import { BoardData, Column, Card, moveCard as localMoveCard } from "@/lib/kanban";
 
@@ -17,7 +18,7 @@ export function useBoard() {
   const [error, setError] = useState<Error | null>(null);
   const [boardId, setBoardId] = useState<number | null>(null);
 
-  const updateBoard = useCallback((detail: any) => {
+  const updateBoard = useCallback((detail: BoardDetailResponse) => {
     const mappedColumns: Column[] = detail.columns.map((c: any) => ({
       id: `col-${c.id}`,
       title: c.name,
@@ -65,8 +66,7 @@ export function useBoard() {
   const renameColumn = async (columnId: string, title: string) => {
     if (!boardData) return;
 
-    // Optimistic UI update
-    const prevData = { ...boardData };
+    const prevData = structuredClone(boardData);
     setBoardData((prev) => {
       if (!prev) return prev;
       return {
@@ -117,7 +117,7 @@ export function useBoard() {
   const deleteCard = async (columnId: string, cardId: string) => {
     if (!boardData) return;
 
-    const prevData = { ...boardData };
+    const prevData = structuredClone(boardData);
 
     setBoardData((prev) => {
       if (!prev) return prev;
@@ -145,7 +145,7 @@ export function useBoard() {
   const moveCard = async (activeId: string, overId: string) => {
     if (!boardData) return;
 
-    const prevData = { ...boardData };
+    const prevData = structuredClone(boardData);
 
     // Use local moveCard from kanban.ts for optimistic update
     const newColumns = localMoveCard(boardData.columns, activeId, overId);

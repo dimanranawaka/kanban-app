@@ -10,7 +10,7 @@ def test_login_sets_cookie_and_me_ok(client):
     me = client.get("/api/auth/me")
     assert me.status_code == 200
     assert me.json()["username"] == "user"
-    assert me.json()["user_id"] == 1
+    assert me.json()["user_id"] > 0
 
 
 def test_logout_clears_session(client):

@@ -37,7 +37,7 @@ async def create_card(body: CardCreate, user: CurrentUser):
             """,
             (body.column_id, pos),
         )
-        conn.execute(
+        cursor = conn.execute(
             """
             INSERT INTO kanban_cards (column_id, title, description, position)
             VALUES (?, ?, ?, ?)
@@ -45,7 +45,7 @@ async def create_card(body: CardCreate, user: CurrentUser):
             (body.column_id, body.title.strip(), body.description, pos),
         )
         conn.commit()
-        row_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+        row_id = cursor.lastrowid
         row = conn.execute(
             "SELECT * FROM kanban_cards WHERE id = ?", (row_id,)
         ).fetchone()
@@ -65,22 +65,16 @@ async def update_card(card_id: int, body: CardUpdate, user: CurrentUser):
         if not card:
             raise HTTPException(status_code=404, detail="Card not found")
 
+        fields: dict = {}
         if body.title is not None:
-            conn.execute(
-                """
-                UPDATE kanban_cards SET title = ?, updated_at = CURRENT_TIMESTAMP
-                WHERE id = ?
-                """,
-                (body.title.strip(), card_id),
-            )
+            fields["title"] = body.title.strip()
         if body.description is not None:
-            conn.execute(
-                """
-                UPDATE kanban_cards SET description = ?, updated_at = CURRENT_TIMESTAMP
-                WHERE id = ?
-                """,
-                (body.description, card_id),
-            )
+            fields["description"] = body.description
+        set_clause = ", ".join(f"{k} = ?" for k in fields)
+        conn.execute(
+            f"UPDATE kanban_cards SET {set_clause}, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+            [*fields.values(), card_id],
+        )
         conn.commit()
         row = fetch_card_owned(conn, user.user_id, card_id)
         return dict(row)

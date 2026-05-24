@@ -13,13 +13,6 @@ type KanbanColumnProps = {
   onDeleteCard: (columnId: string, cardId: string) => void;
 };
 
-const columnIcons = {
-  todo: "📋",
-  inprogress: "⚙️",
-  inreview: "👀",
-  done: "✅",
-  backlog: "📚",
-};
 
 const colorMap: Record<string, { accent: string; bg: string; border: string; icon: string }> = {
   todo: { 

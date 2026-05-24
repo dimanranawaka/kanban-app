@@ -18,7 +18,7 @@ def db_path() -> Path:
 def get_connection() -> sqlite3.Connection:
     path = db_path()
     path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(path)
+    conn = sqlite3.connect(path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
@@ -83,11 +83,10 @@ def init_db() -> None:
             """
         )
         conn.commit()
-        try:
+        columns = [r["name"] for r in conn.execute("PRAGMA table_info(users)").fetchall()]
+        if "password_hash" not in columns:
             conn.execute("ALTER TABLE users ADD COLUMN password_hash TEXT")
             conn.commit()
-        except sqlite3.OperationalError:
-            pass
 
         seed_mvp_user_and_default_board(conn)
         conn.commit()
