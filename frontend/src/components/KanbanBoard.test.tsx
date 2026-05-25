@@ -5,6 +5,13 @@ import { vi } from "vitest";
 import type { BoardData } from "@/lib/kanban";
 import React, { useState } from "react";
 
+// Mock Next.js router
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+  useParams: () => ({}),
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 const testData: BoardData = {
   columns: [
     { id: "col-1", title: "To Do", cardIds: [] },
@@ -34,7 +41,7 @@ vi.mock("@/hooks/useBoard", () => {
       const addCard = (columnId: string, title: string, details: string) => {
         const newId = makeId();
         setBoardData((prev) => ({
-          cards: { ...prev.cards, [newId]: { id: newId, title, details } },
+          cards: { ...prev.cards, [newId]: { id: newId, title, details, labels: [] } },
           columns: prev.columns.map((c) =>
             c.id === columnId ? { ...c, cardIds: [...c.cardIds, newId] } : c
           ),
@@ -57,15 +64,27 @@ vi.mock("@/hooks/useBoard", () => {
       };
 
       const moveCard = () => {};
+      const editCard = () => {};
+      const addColumn = () => {};
+      const removeColumn = () => {};
 
       return {
         boardData,
         isLoading: false,
         error: null,
+        boardId: 1,
+        boards: [],
+        currentBoard: null,
         renameColumn,
         addCard,
         deleteCard,
+        editCard,
         moveCard,
+        addColumn,
+        removeColumn,
+        updateBoard: () => {},
+        loadBoard: async () => {},
+        switchBoard: async () => {},
       };
     },
   };

@@ -19,7 +19,7 @@ export default function ChatSidebar({ boardId, onBoardUpdate }: { boardId: numbe
     if (isOpen && messages.length === 0) {
       loadHistory();
     }
-  }, [isOpen]);
+  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -58,7 +58,7 @@ export default function ChatSidebar({ boardId, onBoardUpdate }: { boardId: numbe
       if (response.board) {
         onBoardUpdate(response.board);
       }
-    } catch (err) {
+    } catch {
       setMessages((prev) => [...prev, { role: "assistant", content: "Sorry, I encountered an error." }]);
     } finally {
       setIsLoading(false);

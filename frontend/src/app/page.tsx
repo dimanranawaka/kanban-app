@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { KanbanBoard } from '@/components/KanbanBoard';
+import BoardDashboard from '@/components/BoardDashboard';
 import { fetchMe } from '@/lib/auth';
 
 export default function Home() {
@@ -20,21 +20,16 @@ export default function Home() {
       }
       setReady(true);
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [router]);
 
   if (!ready) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[var(--surface)] to-[var(--surface-strong)]">
-        <div className="text-center">
-          <div className="h-12 w-12 rounded-full border-4 border-[var(--stroke)] border-t-[var(--primary-blue)] animate-spin mx-auto mb-4" />
-          <p className="text-[var(--gray-text)]">Loading...</p>
-        </div>
+        <div className="h-12 w-12 rounded-full border-4 border-[var(--stroke)] border-t-[var(--primary-blue)] animate-spin" />
       </div>
     );
   }
 
-  return <KanbanBoard />;
+  return <BoardDashboard />;
 }

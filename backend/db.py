@@ -33,6 +33,8 @@ def init_db() -> None:
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 username TEXT UNIQUE NOT NULL,
                 password_hash TEXT,
+                display_name TEXT,
+                email TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
@@ -40,6 +42,8 @@ def init_db() -> None:
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER NOT NULL,
                 title TEXT DEFAULT 'My Project',
+                description TEXT,
+                color TEXT DEFAULT '#209DD7',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -61,6 +65,9 @@ def init_db() -> None:
                 title TEXT NOT NULL,
                 description TEXT,
                 position INTEGER NOT NULL,
+                due_date TEXT,
+                priority TEXT DEFAULT 'medium',
+                labels TEXT DEFAULT '[]',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (column_id) REFERENCES kanban_columns(id) ON DELETE CASCADE
@@ -83,11 +90,31 @@ def init_db() -> None:
             """
         )
         conn.commit()
-        columns = [r["name"] for r in conn.execute("PRAGMA table_info(users)").fetchall()]
-        if "password_hash" not in columns:
-            conn.execute("ALTER TABLE users ADD COLUMN password_hash TEXT")
-            conn.commit()
 
+        # Migration: add columns to existing tables if not present
+        user_cols = [r["name"] for r in conn.execute("PRAGMA table_info(users)").fetchall()]
+        if "password_hash" not in user_cols:
+            conn.execute("ALTER TABLE users ADD COLUMN password_hash TEXT")
+        if "display_name" not in user_cols:
+            conn.execute("ALTER TABLE users ADD COLUMN display_name TEXT")
+        if "email" not in user_cols:
+            conn.execute("ALTER TABLE users ADD COLUMN email TEXT")
+
+        board_cols = [r["name"] for r in conn.execute("PRAGMA table_info(kanban_boards)").fetchall()]
+        if "description" not in board_cols:
+            conn.execute("ALTER TABLE kanban_boards ADD COLUMN description TEXT")
+        if "color" not in board_cols:
+            conn.execute("ALTER TABLE kanban_boards ADD COLUMN color TEXT DEFAULT '#209DD7'")
+
+        card_cols = [r["name"] for r in conn.execute("PRAGMA table_info(kanban_cards)").fetchall()]
+        if "due_date" not in card_cols:
+            conn.execute("ALTER TABLE kanban_cards ADD COLUMN due_date TEXT")
+        if "priority" not in card_cols:
+            conn.execute("ALTER TABLE kanban_cards ADD COLUMN priority TEXT DEFAULT 'medium'")
+        if "labels" not in card_cols:
+            conn.execute("ALTER TABLE kanban_cards ADD COLUMN labels TEXT DEFAULT '[]'")
+
+        conn.commit()
         seed_mvp_user_and_default_board(conn)
         conn.commit()
     finally:

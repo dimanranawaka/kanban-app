@@ -15,8 +15,8 @@ export default function AiTestPage() {
     try {
       const data = await testAiConnection();
       setResponse(data.message);
-    } catch (err: any) {
-      setError(err.message || "An unknown error occurred.");
+    } catch (err) {
+      setError((err as Error).message || "An unknown error occurred.");
     } finally {
       setIsLoading(false);
     }
@@ -37,7 +37,7 @@ export default function AiTestPage() {
 
         <div className="mb-6 rounded-lg border border-[var(--stroke)] bg-[var(--surface)] p-4 text-sm text-[var(--gray-text)]">
           This test will send the prompt: <br/>
-          <strong className="text-[var(--navy-dark)]">"What is 2+2?"</strong><br/>
+          <strong className="text-[var(--navy-dark)]">&quot;What is 2+2?&quot;</strong><br/>
           to the <code className="rounded bg-black/5 px-1 py-0.5">gpt-4o-mini</code> model.
         </div>
 
