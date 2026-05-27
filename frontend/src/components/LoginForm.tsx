@@ -20,7 +20,6 @@ export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
-
     try {
       if (isLogin) {
         await login(username, password);
@@ -37,10 +36,10 @@ export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="username" className="block text-sm font-semibold text-[#032147] mb-2">
+        <div className="space-y-1.5">
+          <label htmlFor="username" className="block text-sm font-semibold" style={{ color: 'var(--text)' }}>
             Username
           </label>
           <input
@@ -48,17 +47,17 @@ export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
             name="username"
             type="text"
             value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="Enter username"
-            className="w-full px-4 py-3 rounded-lg border border-[#888888]/30 bg-white text-[#032147] placeholder-[#888888]/50 outline-none transition focus:border-[#209dd7] focus:ring-2 focus:ring-[#209dd7]/20"
+            onChange={e => setUsername(e.target.value)}
+            placeholder="your_username"
+            className="field-input"
             required
             disabled={isLoading}
             autoComplete="username"
           />
         </div>
 
-        <div>
-          <label htmlFor="password" className="block text-sm font-semibold text-[#032147] mb-2">
+        <div className="space-y-1.5">
+          <label htmlFor="password" className="block text-sm font-semibold" style={{ color: 'var(--text)' }}>
             Password
           </label>
           <input
@@ -66,42 +65,57 @@ export const LoginForm = ({ onLoginSuccess }: LoginFormProps) => {
             name="password"
             type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Enter password"
-            className="w-full px-4 py-3 rounded-lg border border-[#888888]/30 bg-white text-[#032147] placeholder-[#888888]/50 outline-none transition focus:border-[#209dd7] focus:ring-2 focus:ring-[#209dd7]/20"
+            onChange={e => setPassword(e.target.value)}
+            placeholder="••••••••"
+            className="field-input"
             required
             disabled={isLoading}
-            autoComplete={isLogin ? "current-password" : "new-password"}
+            autoComplete={isLogin ? 'current-password' : 'new-password'}
           />
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
+          <div
+            className="flex items-start gap-2 rounded-lg px-3.5 py-3 text-sm"
+            style={{
+              background: 'var(--danger-light)',
+              border: '1.5px solid rgba(220, 38, 38, 0.18)',
+              color: 'var(--danger)',
+            }}
+          >
+            <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            </svg>
             {error}
           </div>
         )}
 
         <button
           type="submit"
-          disabled={isLoading}
-          className="w-full bg-gradient-to-r from-[#209dd7] to-[#753991] text-white font-semibold py-3 rounded-lg transition hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+          disabled={isLoading || !username || !password}
+          className="btn btn-primary btn-lg w-full mt-1"
         >
-          {isLoading ? (isLogin ? 'Logging in...' : 'Signing up...') : (isLogin ? 'Log In' : 'Sign Up')}
+          {isLoading ? (
+            <><span className="spinner-sm" />{isLogin ? 'Signing in…' : 'Creating account…'}</>
+          ) : (
+            isLogin ? 'Sign In' : 'Create Account'
+          )}
         </button>
       </form>
-      
-      <div className="text-center">
+
+      <p className="text-center text-sm" style={{ color: 'var(--text-3)' }}>
+        {isLogin ? "Don't have an account? " : "Already have an account? "}
         <button
           type="button"
-          onClick={() => {
-            setIsLogin(!isLogin);
-            setError('');
-          }}
-          className="text-sm font-medium text-[#209dd7] hover:underline"
+          onClick={() => { setIsLogin(!isLogin); setError(''); }}
+          className="font-semibold transition-colors"
+          style={{ color: 'var(--primary)' }}
+          onMouseEnter={e => (e.currentTarget.style.color = 'var(--primary-hover)')}
+          onMouseLeave={e => (e.currentTarget.style.color = 'var(--primary)')}
         >
-          {isLogin ? "Don't have an account? Sign up" : "Already have an account? Log in"}
+          {isLogin ? 'Sign up free' : 'Sign in'}
         </button>
-      </div>
+      </p>
     </div>
   );
 };

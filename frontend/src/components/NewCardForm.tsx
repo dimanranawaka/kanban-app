@@ -1,76 +1,68 @@
 import { useState, type FormEvent } from "react";
 
-const initialFormState = { title: "", details: "" };
-
-type NewCardFormProps = {
-  onAdd: (title: string, details: string) => void;
-};
+type NewCardFormProps = { onAdd: (title: string, details: string) => void };
 
 export const NewCardForm = ({ onAdd }: NewCardFormProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [formState, setFormState] = useState(initialFormState);
+  const [title, setTitle] = useState("");
+  const [details, setDetails] = useState("");
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!formState.title.trim()) {
-      return;
-    }
-    onAdd(formState.title.trim(), formState.details.trim());
-    setFormState(initialFormState);
-    setIsOpen(false);
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!title.trim()) return;
+    onAdd(title.trim(), details.trim());
+    setTitle(""); setDetails(""); setIsOpen(false);
   };
 
+  const handleCancel = () => { setIsOpen(false); setTitle(""); setDetails(""); };
+
+  if (!isOpen) {
+    return (
+      <button
+        type="button"
+        onClick={() => setIsOpen(true)}
+        className="flex items-center gap-1.5 w-full rounded-lg px-2 py-2 text-xs font-semibold transition-colors"
+        style={{ color: 'var(--text-3)' }}
+        onMouseEnter={e => {
+          e.currentTarget.style.color = 'var(--primary)';
+          e.currentTarget.style.background = 'var(--primary-light)';
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.color = 'var(--text-3)';
+          e.currentTarget.style.background = 'transparent';
+        }}
+      >
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+        Add card
+      </button>
+    );
+  }
+
   return (
-    <div>
-      {isOpen ? (
-        <form onSubmit={handleSubmit} className="space-y-3 p-3 bg-white/50 rounded-lg border border-[var(--stroke)]/30">
-          <input
-            value={formState.title}
-            onChange={(event) =>
-              setFormState((prev) => ({ ...prev, title: event.target.value }))
-            }
-            placeholder="Card title..."
-            className="w-full rounded-lg border border-[var(--stroke)] bg-white px-3 py-2 text-sm font-semibold text-[var(--navy-dark)] placeholder-[var(--gray-text)]/50 outline-none transition focus:border-[var(--primary-blue)] focus:ring-2 focus:ring-[var(--primary-blue)]/20"
-            required
-            autoFocus
-          />
-          <textarea
-            value={formState.details}
-            onChange={(event) =>
-              setFormState((prev) => ({ ...prev, details: event.target.value }))
-            }
-            placeholder="Add details..."
-            rows={2}
-            className="w-full resize-none rounded-lg border border-[var(--stroke)] bg-white px-3 py-2 text-xs text-[var(--gray-text)] placeholder-[var(--gray-text)]/50 outline-none transition focus:border-[var(--primary-blue)] focus:ring-2 focus:ring-[var(--primary-blue)]/20"
-          />
-          <div className="flex items-center gap-2 pt-1">
-            <button
-              type="submit"
-              className="flex-1 rounded-lg bg-[var(--secondary-purple)] px-3 py-2 text-xs font-bold uppercase tracking-wider text-white transition hover:brightness-110 active:scale-95"
-            >
-              Add
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setIsOpen(false);
-                setFormState(initialFormState);
-              }}
-              className="rounded-lg border border-[var(--stroke)] px-3 py-2 text-xs font-semibold uppercase tracking-wider text-[var(--gray-text)] transition hover:bg-[var(--surface)] hover:text-[var(--navy-dark)]"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      ) : (
-        <button
-          type="button"
-          onClick={() => setIsOpen(true)}
-          className="w-full rounded-lg border-2 border-dashed border-[var(--stroke)]/40 px-3 py-3 text-xs font-semibold uppercase tracking-wider text-[var(--primary-blue)] transition hover:border-[var(--primary-blue)]/60 hover:bg-blue-50/30"
-        >
-          + Add card
-        </button>
-      )}
-    </div>
+    <form onSubmit={handleSubmit} className="space-y-2 animate-fade-up">
+      <input
+        value={title}
+        onChange={e => setTitle(e.target.value)}
+        placeholder="Card title…"
+        className="field-input text-[13px]"
+        style={{ padding: '8px 12px' }}
+        required
+        autoFocus
+      />
+      <textarea
+        value={details}
+        onChange={e => setDetails(e.target.value)}
+        placeholder="Details (optional)…"
+        rows={2}
+        className="field-input resize-none text-[12px]"
+        style={{ padding: '8px 12px' }}
+      />
+      <div className="flex gap-2">
+        <button type="submit" className="btn btn-primary btn-sm flex-1">Add card</button>
+        <button type="button" onClick={handleCancel} className="btn btn-secondary btn-sm">Cancel</button>
+      </div>
+    </form>
   );
 };

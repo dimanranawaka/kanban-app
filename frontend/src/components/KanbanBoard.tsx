@@ -3,14 +3,8 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  DndContext,
-  DragOverlay,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  closestCorners,
-  type DragEndEvent,
-  type DragStartEvent,
+  DndContext, DragOverlay, PointerSensor, useSensor, useSensors,
+  closestCorners, type DragEndEvent, type DragStartEvent,
 } from "@dnd-kit/core";
 import { KanbanColumn } from "@/components/KanbanColumn";
 import { KanbanCardPreview } from "@/components/KanbanCardPreview";
@@ -20,25 +14,26 @@ import { logout } from "@/lib/auth";
 import { useBoard } from "@/hooks/useBoard";
 import type { Card } from "@/lib/kanban";
 
+const STATUS_COLORS: Record<string, string> = {
+  backlog:    'var(--c-backlog)',
+  todo:       'var(--c-todo)',
+  inprogress: 'var(--c-progress)',
+  inreview:   'var(--c-review)',
+  done:       'var(--c-done)',
+};
+
+function getColColor(title: string) {
+  const key = title.toLowerCase().replace(/[\s_-]/g, '');
+  return STATUS_COLORS[key] ?? STATUS_COLORS.todo;
+}
+
 type Props = { boardId?: number };
 
 export const KanbanBoard = ({ boardId: initialBoardId }: Props) => {
   const router = useRouter();
   const {
-    boardData: board,
-    isLoading,
-    error,
-    boardId,
-    boards,
-    currentBoard,
-    renameColumn,
-    addColumn,
-    removeColumn,
-    addCard,
-    editCard,
-    deleteCard,
-    moveCard,
-    updateBoard,
+    boardData: board, isLoading, error, boardId, boards, currentBoard,
+    renameColumn, addColumn, removeColumn, addCard, editCard, deleteCard, moveCard, updateBoard,
   } = useBoard(initialBoardId);
 
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
@@ -46,34 +41,26 @@ export const KanbanBoard = ({ boardId: initialBoardId }: Props) => {
   const [showAddColumn, setShowAddColumn] = useState(false);
   const [newColumnName, setNewColumnName] = useState("");
   const [addingColumn, setAddingColumn] = useState(false);
+  const [mobileColIdx, setMobileColIdx] = useState(0);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
-  );
-
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
   const cardsById = useMemo(() => board?.cards || {}, [board?.cards]);
 
-  const handleDragStart = (event: DragStartEvent) => {
-    setActiveCardId(event.active.id as string);
-  };
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
+  const handleDragStart = (e: DragStartEvent) => setActiveCardId(e.active.id as string);
+  const handleDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
     setActiveCardId(null);
     if (!over || active.id === over.id) return;
     moveCard(active.id as string, over.id as string);
   };
-
-  const handleLogout = () => { void logout(); };
 
   const handleAddColumn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newColumnName.trim()) return;
     setAddingColumn(true);
     await addColumn(newColumnName.trim());
-    setNewColumnName("");
-    setShowAddColumn(false);
-    setAddingColumn(false);
+    setNewColumnName(""); setShowAddColumn(false); setAddingColumn(false);
   };
 
   const handleDeleteColumn = (columnId: string) => {
@@ -83,10 +70,10 @@ export const KanbanBoard = ({ boardId: initialBoardId }: Props) => {
 
   if (isLoading || !board) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[var(--surface)] to-[var(--surface-strong)]">
-        <div className="text-center">
-          <div className="h-12 w-12 rounded-full border-4 border-[var(--stroke)] border-t-[var(--primary-blue)] animate-spin mx-auto mb-4" />
-          <p className="text-[var(--gray-text)]">Loading board...</p>
+      <div className="flex min-h-screen items-center justify-center" style={{ background: 'var(--bg)' }}>
+        <div className="text-center space-y-3">
+          <div className="spinner mx-auto" />
+          <p className="text-sm" style={{ color: 'var(--text-2)' }}>Loading board…</p>
         </div>
       </div>
     );
@@ -94,165 +81,246 @@ export const KanbanBoard = ({ boardId: initialBoardId }: Props) => {
 
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[var(--surface)] to-[var(--surface-strong)]">
+      <div className="flex min-h-screen items-center justify-center" style={{ background: 'var(--bg)' }}>
         <div className="text-center">
-          <p className="text-red-500 font-bold mb-2">Error loading board</p>
-          <p className="text-[var(--gray-text)]">{error.message}</p>
+          <p className="font-semibold mb-1" style={{ color: 'var(--danger)' }}>Error loading board</p>
+          <p className="text-sm" style={{ color: 'var(--text-2)' }}>{error.message}</p>
         </div>
       </div>
     );
   }
 
   const activeCard = activeCardId ? cardsById[activeCardId] : null;
-  const totalCards = Object.keys(board.cards).length;
+  const totalCards = Object.values(board.cards).length;
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-gradient-to-br from-[var(--surface)] to-[var(--surface-strong)]">
-      <div className="pointer-events-none absolute left-0 top-0 h-[420px] w-[420px] -translate-x-1/3 -translate-y-1/3 rounded-full bg-[radial-gradient(circle,_rgba(32,157,215,0.15)_0%,_rgba(32,157,215,0.02)_70%,_transparent_100%)] blur-3xl" />
-      <div className="pointer-events-none absolute bottom-0 right-0 h-[520px] w-[520px] translate-x-1/4 translate-y-1/4 rounded-full bg-[radial-gradient(circle,_rgba(117,57,145,0.12)_0%,_rgba(117,57,145,0.02)_70%,_transparent_100%)] blur-3xl" />
+    <div className="flex flex-col min-h-screen" style={{ background: 'var(--bg)' }}>
 
-      <main className="relative mx-auto flex min-h-screen max-w-[1600px] flex-col gap-6 px-6 pb-16 pt-8">
-        {/* Header */}
-        <header className="space-y-4">
-          <div className="rounded-2xl border border-[var(--stroke)]/50 bg-gradient-to-br from-white/80 to-white/40 p-6 shadow-lg backdrop-blur-2xl">
-            <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
-              <div className="space-y-3 flex-1">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[var(--primary-blue)] to-[var(--secondary-purple)] flex items-center justify-center shadow-lg">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-widest text-[var(--primary-blue)]">Kanban Studio</p>
-                    <h1 className="font-display text-2xl font-bold text-[var(--navy-dark)]">
-                      {currentBoard?.title ?? "Board"}
-                    </h1>
-                  </div>
-                </div>
-                {currentBoard?.description && (
-                  <p className="text-sm text-[var(--gray-text)]">{currentBoard.description}</p>
-                )}
-
-                {/* Board switcher */}
-                {boards.length > 1 && (
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-semibold text-[var(--gray-text)] uppercase tracking-wide">Boards:</span>
-                    {boards.map(b => (
-                      <button
-                        key={b.id}
-                        onClick={() => router.push(`/board?id=${b.id}`)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                          b.id === boardId
-                            ? "bg-[var(--primary-blue)] text-white"
-                            : "bg-white border border-[var(--stroke)] text-[var(--navy-dark)] hover:border-[var(--primary-blue)]"
-                        }`}
-                        style={b.id === boardId ? {} : { borderLeftColor: b.color ?? undefined, borderLeftWidth: 3 }}
-                      >
-                        {b.title}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="flex gap-3 items-center flex-shrink-0">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-xl bg-gradient-to-br from-[var(--accent-yellow)]/20 to-[var(--accent-yellow)]/5 border border-[var(--accent-yellow)]/30 px-4 py-2.5 backdrop-blur-sm">
-                    <p className="text-xs font-bold uppercase tracking-wide text-[var(--accent-yellow)]">Columns</p>
-                    <p className="mt-0.5 text-xl font-bold text-[var(--navy-dark)]">{board.columns.length}</p>
-                  </div>
-                  <div className="rounded-xl bg-gradient-to-br from-[var(--primary-blue)]/20 to-[var(--primary-blue)]/5 border border-[var(--primary-blue)]/30 px-4 py-2.5 backdrop-blur-sm">
-                    <p className="text-xs font-bold uppercase tracking-wide text-[var(--primary-blue)]">Cards</p>
-                    <p className="mt-0.5 text-xl font-bold text-[var(--navy-dark)]">{totalCards}</p>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <button
-                    onClick={() => router.push("/")}
-                    className="rounded-lg border border-[var(--stroke)] bg-white px-3 py-2 text-xs font-semibold text-[var(--gray-text)] hover:bg-gray-50 transition"
-                  >
-                    All Boards
-                  </button>
-                  <button
-                    onClick={() => router.push("/profile")}
-                    className="rounded-lg border border-[var(--stroke)] bg-white px-3 py-2 text-xs font-semibold text-[var(--gray-text)] hover:bg-gray-50 transition"
-                  >
-                    Profile
-                  </button>
-                  <button
-                    onClick={handleLogout}
-                    className="rounded-lg border border-[var(--stroke)] bg-white px-3 py-2 text-xs font-semibold text-[var(--gray-text)] hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition"
-                  >
-                    Log out
-                  </button>
-                </div>
-              </div>
-            </div>
+      {/* ── Navigation ── */}
+      <nav className="app-nav">
+        {/* Logo + board title */}
+        <button
+          onClick={() => router.push("/")}
+          className="flex items-center gap-2 shrink-0 mr-1 rounded-lg px-1 py-1 transition-colors"
+          style={{ color: 'inherit' }}
+          onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
+          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+        >
+          <div
+            className="flex h-7 w-7 items-center justify-center rounded-lg shrink-0"
+            style={{ background: 'var(--primary)' }}
+          >
+            <LogoIcon />
           </div>
-
-          {/* Status bar */}
-          <div className="flex flex-wrap gap-2 px-2 items-center">
-            {board.columns.map((column) => (
-              <div
-                key={column.id}
-                className="flex items-center gap-2 rounded-full bg-white px-4 py-2 shadow-sm border border-[var(--stroke)]/50 hover:shadow-md transition-shadow"
-              >
-                <span className="text-xs font-bold text-[var(--navy-dark)]">{column.title}</span>
-                <span className="inline-flex items-center justify-center min-w-[20px] h-5 rounded-full bg-[var(--primary-blue)]/10 text-xs font-bold text-[var(--primary-blue)]">
-                  {column.cardIds.length}
-                </span>
-              </div>
-            ))}
-            <button
-              onClick={() => setShowAddColumn(true)}
-              className="flex items-center gap-1.5 rounded-full bg-white border border-dashed border-[var(--stroke)] px-4 py-2 text-xs font-semibold text-[var(--gray-text)] hover:border-[var(--primary-blue)] hover:text-[var(--primary-blue)] transition"
+          <div className="hidden sm:block text-left">
+            <p className="text-[11px] font-medium leading-none mb-0.5" style={{ color: 'var(--text-3)' }}>
+              Kanban Studio
+            </p>
+            <p
+              className="font-display font-bold text-sm leading-none truncate max-w-[180px]"
+              style={{ color: 'var(--text)' }}
             >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Add Column
-            </button>
+              {currentBoard?.title ?? "Board"}
+            </p>
           </div>
-        </header>
+        </button>
 
-        {/* Kanban Columns */}
+        {/* Board switcher — desktop */}
+        {boards.length > 1 && (
+          <div className="hidden md:flex items-center gap-1 ml-1">
+            {boards.map(b => (
+              <button
+                key={b.id}
+                onClick={() => router.push(`/board?id=${b.id}`)}
+                className="btn btn-ghost btn-sm text-xs"
+                style={{
+                  background: b.id === boardId ? 'var(--primary-light)' : undefined,
+                  color: b.id === boardId ? 'var(--primary)' : undefined,
+                  fontWeight: b.id === boardId ? 600 : undefined,
+                }}
+              >
+                {b.title}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="flex-1" />
+
+        {/* Stats — desktop */}
+        <div className="hidden sm:flex items-center gap-2 mr-2">
+          <StatChip label="Cols" value={board.columns.length} />
+          <StatChip label="Cards" value={totalCards} />
+        </div>
+
+        {/* Add column — desktop */}
+        <button
+          onClick={() => setShowAddColumn(true)}
+          className="btn btn-secondary btn-sm hidden sm:flex"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          Add Column
+        </button>
+
+        {/* Desktop user actions */}
+        <div className="hidden sm:flex items-center gap-1">
+          <button onClick={() => router.push("/profile")} className="btn btn-ghost btn-sm">
+            Profile
+          </button>
+          <button onClick={() => void logout()} className="btn btn-ghost btn-danger-ghost btn-sm">
+            Sign out
+          </button>
+        </div>
+
+        {/* Mobile hamburger */}
+        <button
+          onClick={() => setShowMobileMenu(v => !v)}
+          className="sm:hidden btn btn-ghost btn-sm p-2"
+          aria-label="Menu"
+        >
+          {showMobileMenu
+            ? <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            : <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
+          }
+        </button>
+      </nav>
+
+      {/* Mobile dropdown */}
+      {showMobileMenu && (
+        <div
+          className="sm:hidden px-4 py-3 space-y-2 animate-fade-up"
+          style={{
+            background: 'var(--surface)',
+            borderBottom: '1px solid var(--border)',
+            boxShadow: 'var(--shadow-md)',
+          }}
+        >
+          <button
+            onClick={() => { setShowAddColumn(true); setShowMobileMenu(false); }}
+            className="btn btn-secondary btn-sm w-full justify-center"
+          >
+            Add Column
+          </button>
+          <button
+            onClick={() => router.push("/profile")}
+            className="btn btn-ghost btn-sm w-full justify-center"
+          >
+            Profile
+          </button>
+          <button
+            onClick={() => void logout()}
+            className="btn btn-ghost btn-danger-ghost btn-sm w-full justify-center"
+          >
+            Sign out
+          </button>
+        </div>
+      )}
+
+      {/* Mobile column tabs */}
+      {board.columns.length > 0 && (
+        <div
+          className="sm:hidden overflow-x-auto flex gap-2 px-4 py-2.5 shrink-0"
+          style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)' }}
+        >
+          {board.columns.map((col, i) => {
+            const color = getColColor(col.title);
+            const isActive = i === mobileColIdx;
+            return (
+              <button
+                key={col.id}
+                onClick={() => setMobileColIdx(i)}
+                className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
+                style={{
+                  background: isActive ? `${color}14` : 'var(--surface-2)',
+                  color: isActive ? color : 'var(--text-2)',
+                  border: `1.5px solid ${isActive ? `${color}35` : 'var(--border)'}`,
+                }}
+              >
+                <span className="h-2 w-2 rounded-full shrink-0" style={{ background: color }} />
+                {col.title}
+                <span
+                  className="px-1 rounded font-bold text-[10px]"
+                  style={{
+                    background: isActive ? `${color}20` : 'var(--surface-3)',
+                    color: isActive ? color : 'var(--text-3)',
+                  }}
+                >
+                  {col.cardIds.length}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── Board ── */}
+      <div className="flex-1 overflow-hidden">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCorners}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          <section className="grid gap-5" style={{ gridTemplateColumns: `repeat(${board.columns.length}, minmax(260px, 1fr))` }}>
-            {board.columns.map((column) => (
-              <KanbanColumn
-                key={column.id}
-                column={column}
-                canDelete={board.columns.length > 1}
-                cards={column.cardIds
-                  .map(cardId => board.cards[cardId])
-                  .filter((c): c is NonNullable<typeof c> => c !== undefined)}
-                onRename={renameColumn}
-                onAddCard={addCard}
-                onDeleteCard={deleteCard}
-                onEditCard={setEditingCard}
-                onDeleteColumn={handleDeleteColumn}
-              />
+          <div className="board-track">
+            {board.columns.map((column, idx) => (
+              <div key={column.id} className="board-col">
+                <div className={idx === mobileColIdx ? 'block sm:block' : 'hidden sm:block'}>
+                  <KanbanColumn
+                    column={column}
+                    staggerIndex={idx}
+                    canDelete={board.columns.length > 1}
+                    cards={column.cardIds
+                      .map(id => board.cards[id])
+                      .filter((c): c is NonNullable<typeof c> => c !== undefined)}
+                    onRename={renameColumn}
+                    onAddCard={addCard}
+                    onDeleteCard={deleteCard}
+                    onEditCard={setEditingCard}
+                    onDeleteColumn={handleDeleteColumn}
+                  />
+                </div>
+              </div>
             ))}
-          </section>
+
+            {/* Add column placeholder — desktop */}
+            <div className="board-col hidden sm:flex flex-col items-start">
+              <button
+                onClick={() => setShowAddColumn(true)}
+                className="w-full rounded-xl py-8 flex flex-col items-center justify-center gap-2 transition-all duration-200"
+                style={{ border: '1.5px dashed var(--border-mid)', color: 'var(--text-3)' }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = 'var(--primary)';
+                  e.currentTarget.style.color = 'var(--primary)';
+                  e.currentTarget.style.background = 'var(--primary-light)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = 'var(--border-mid)';
+                  e.currentTarget.style.color = 'var(--text-3)';
+                  e.currentTarget.style.background = 'transparent';
+                }}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                <span className="text-xs font-semibold">Add Column</span>
+              </button>
+            </div>
+          </div>
+
           <DragOverlay>
             {activeCard ? (
-              <div className="w-[280px]">
+              <div className="w-[268px] rotate-1 opacity-95">
                 <KanbanCardPreview card={activeCard} />
               </div>
             ) : null}
           </DragOverlay>
         </DndContext>
-      </main>
+      </div>
 
       {boardId && <ChatSidebar boardId={boardId} onBoardUpdate={updateBoard} />}
 
-      {/* Card edit modal */}
       {editingCard && (
         <CardEditModal
           card={editingCard}
@@ -261,34 +329,38 @@ export const KanbanBoard = ({ boardId: initialBoardId }: Props) => {
         />
       )}
 
-      {/* Add column modal */}
       {showAddColumn && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="w-full max-w-sm rounded-2xl bg-white shadow-2xl p-6">
-            <h2 className="text-lg font-bold text-[var(--navy-dark)] mb-4">Add Column</h2>
+        <div
+          className="modal-overlay animate-fade-in"
+          onClick={e => { if (e.target === e.currentTarget) { setShowAddColumn(false); setNewColumnName(""); } }}
+        >
+          <div className="modal-box animate-slide-up p-6">
+            <h2 className="font-display text-xl font-bold mb-5" style={{ color: 'var(--text)' }}>
+              Add column
+            </h2>
             <form onSubmit={handleAddColumn} className="space-y-4">
               <input
                 autoFocus
                 value={newColumnName}
                 onChange={e => setNewColumnName(e.target.value)}
                 placeholder="Column name"
-                className="w-full rounded-lg border border-[var(--stroke)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-blue)]"
+                className="field-input"
                 required
               />
               <div className="flex gap-3">
                 <button
                   type="button"
                   onClick={() => { setShowAddColumn(false); setNewColumnName(""); }}
-                  className="flex-1 rounded-lg border border-[var(--stroke)] px-4 py-2 text-sm font-medium text-[var(--gray-text)] hover:bg-gray-50 transition"
+                  className="btn btn-secondary flex-1"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={addingColumn || !newColumnName.trim()}
-                  className="flex-1 rounded-lg bg-[var(--primary-blue)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition disabled:opacity-50"
+                  className="btn btn-primary flex-1"
                 >
-                  {addingColumn ? "Adding..." : "Add"}
+                  {addingColumn ? <><span className="spinner-sm" />Adding…</> : 'Add'}
                 </button>
               </div>
             </form>
@@ -298,3 +370,26 @@ export const KanbanBoard = ({ boardId: initialBoardId }: Props) => {
     </div>
   );
 };
+
+function StatChip({ label, value }: { label: string; value: number }) {
+  return (
+    <div
+      className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs"
+      style={{ background: 'var(--surface-2)', border: '1px solid var(--border)' }}
+    >
+      <span style={{ color: 'var(--text-3)' }}>{label}</span>
+      <span className="font-bold" style={{ color: 'var(--text)' }}>{value}</span>
+    </div>
+  );
+}
+
+function LogoIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+      <rect x="1.5" y="1.5" width="5" height="9" rx="1.5" fill="white" />
+      <rect x="1.5" y="12" width="5" height="4.5" rx="1.5" fill="white" opacity="0.45" />
+      <rect x="9" y="1.5" width="5" height="4.5" rx="1.5" fill="white" opacity="0.45" />
+      <rect x="9" y="7.5" width="5" height="9" rx="1.5" fill="white" />
+    </svg>
+  );
+}

@@ -3,12 +3,17 @@
 import { useState, useEffect, useRef } from "react";
 import { getChatHistory, sendChatMessage, clearChatHistory, type BoardDetailResponse } from "@/lib/api";
 
-type Message = {
-  role: "user" | "assistant";
-  content: string;
-};
+type Message = { role: "user" | "assistant"; content: string };
 
-export default function ChatSidebar({ boardId, onBoardUpdate }: { boardId: number, onBoardUpdate: (newBoard: BoardDetailResponse) => void }) {
+const SUGGESTIONS = [
+  "Add a bug fix card to To Do",
+  "Move all done tasks to Backlog",
+  "Create a high-priority design card",
+];
+
+export default function ChatSidebar({
+  boardId, onBoardUpdate
+}: { boardId: number; onBoardUpdate: (b: BoardDetailResponse) => void }) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -16,9 +21,7 @@ export default function ChatSidebar({ boardId, onBoardUpdate }: { boardId: numbe
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (isOpen && messages.length === 0) {
-      loadHistory();
-    }
+    if (isOpen && messages.length === 0) loadHistory();
   }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -26,40 +29,28 @@ export default function ChatSidebar({ boardId, onBoardUpdate }: { boardId: numbe
   }, [messages, isLoading]);
 
   const loadHistory = async () => {
-    try {
-      const history = await getChatHistory(boardId);
-      setMessages(history);
-    } catch (err) {
-      console.error("Failed to load history", err);
-    }
+    try { setMessages(await getChatHistory(boardId)); }
+    catch (err) { console.error("Failed to load history", err); }
   };
 
   const handleClear = async () => {
-    try {
-      await clearChatHistory(boardId);
-      setMessages([]);
-    } catch (err) {
-      console.error("Failed to clear history", err);
-    }
+    try { await clearChatHistory(boardId); setMessages([]); }
+    catch (err) { console.error("Failed to clear history", err); }
   };
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
-
-    const userMessage = input.trim();
+    const msg = input.trim();
     setInput("");
-    setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
+    setMessages(prev => [...prev, { role: "user", content: msg }]);
     setIsLoading(true);
-
     try {
-      const response = await sendChatMessage(boardId, userMessage);
-      setMessages((prev) => [...prev, { role: "assistant", content: response.message }]);
-      if (response.board) {
-        onBoardUpdate(response.board);
-      }
+      const res = await sendChatMessage(boardId, msg);
+      setMessages(prev => [...prev, { role: "assistant", content: res.message }]);
+      if (res.board) onBoardUpdate(res.board);
     } catch {
-      setMessages((prev) => [...prev, { role: "assistant", content: "Sorry, I encountered an error." }]);
+      setMessages(prev => [...prev, { role: "assistant", content: "Sorry, something went wrong. Please try again." }]);
     } finally {
       setIsLoading(false);
     }
@@ -67,89 +58,188 @@ export default function ChatSidebar({ boardId, onBoardUpdate }: { boardId: numbe
 
   return (
     <>
-      {/* Floating Action Button */}
+      {/* FAB */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-[var(--primary-blue)] to-[var(--secondary-purple)] text-2xl text-white shadow-xl transition-transform hover:scale-110 active:scale-95"
+        className="fixed bottom-5 right-5 z-50 flex items-center justify-center rounded-full transition-all duration-200"
+        style={{
+          width: 52, height: 52,
+          background: isOpen ? 'var(--surface)' : 'var(--primary)',
+          color: isOpen ? 'var(--text-2)' : '#fff',
+          border: isOpen ? '1.5px solid var(--border-mid)' : 'none',
+          boxShadow: isOpen ? 'var(--shadow-md)' : '0 4px 20px rgba(59, 91, 219, 0.35)',
+        }}
+        aria-label="Toggle AI assistant"
       >
-        {isOpen ? "✕" : "🤖"}
+        {isOpen
+          ? <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          : <SparkleIcon />
+        }
       </button>
 
-      {/* Chat Sidebar */}
-      <div
-        className={`fixed bottom-24 right-6 z-40 flex h-[600px] max-h-[80vh] w-96 flex-col overflow-hidden rounded-2xl border border-[var(--stroke)] bg-white shadow-2xl transition-all duration-300 ${
-          isOpen ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-10 opacity-0"
-        }`}
-      >
-        <div className="flex items-center justify-between bg-[var(--surface)] px-6 py-4 border-b border-[var(--stroke)]">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">🤖</span>
-            <h3 className="font-display font-bold text-[var(--navy-dark)]">AI Assistant</h3>
-          </div>
-          <button
-            onClick={handleClear}
-            className="text-xs font-semibold text-[var(--gray-text)] hover:text-red-500 transition-colors"
+      {/* Chat panel — responsive via .chat-panel class in globals.css */}
+      {isOpen && (
+        <div className="chat-panel animate-slide-up">
+          {/* Header */}
+          <div
+            className="flex items-center justify-between px-4 py-3 shrink-0"
+            style={{ borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}
           >
-            Clear
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50">
-          {messages.length === 0 && !isLoading && (
-            <div className="text-center text-sm text-[var(--gray-text)] mt-10">
-              Ask me to add, move, or delete cards!
-            </div>
-          )}
-          {messages.map((msg, i) => (
-            <div
-              key={i}
-              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-            >
+            <div className="flex items-center gap-2.5">
               <div
-                className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
-                  msg.role === "user"
-                    ? "bg-[var(--primary-blue)] text-white rounded-br-sm"
-                    : "bg-white text-[var(--navy-dark)] border border-[var(--stroke)] shadow-sm rounded-bl-sm"
-                }`}
+                className="flex h-7 w-7 items-center justify-center rounded-lg shrink-0"
+                style={{ background: 'var(--primary-light)' }}
               >
-                {msg.content}
+                <SparkleIcon size={14} color="var(--primary)" />
+              </div>
+              <div>
+                <p className="text-sm font-bold leading-none mb-0.5" style={{ color: 'var(--text)' }}>
+                  AI Assistant
+                </p>
+                <p className="text-[11px] leading-none" style={{ color: 'var(--text-3)' }}>
+                  Manage your board with AI
+                </p>
               </div>
             </div>
-          ))}
-          {isLoading && (
-            <div className="flex justify-start">
-              <div className="max-w-[85%] rounded-2xl bg-white border border-[var(--stroke)] shadow-sm px-4 py-3 rounded-bl-sm">
-                <div className="flex gap-1">
-                  <div className="h-2 w-2 animate-bounce rounded-full bg-gray-300"></div>
-                  <div className="h-2 w-2 animate-bounce rounded-full bg-gray-300" style={{ animationDelay: "0.2s" }}></div>
-                  <div className="h-2 w-2 animate-bounce rounded-full bg-gray-300" style={{ animationDelay: "0.4s" }}></div>
+            <button
+              onClick={handleClear}
+              className="btn btn-ghost btn-sm text-xs"
+              style={{ color: 'var(--text-3)', fontSize: 12 }}
+            >
+              Clear
+            </button>
+          </div>
+
+          {/* Messages */}
+          <div
+            className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0"
+            style={{ background: 'var(--surface-2)' }}
+          >
+            {messages.length === 0 && !isLoading && (
+              <div className="flex flex-col items-center justify-center text-center py-6 gap-3">
+                <div
+                  className="h-12 w-12 rounded-full flex items-center justify-center"
+                  style={{ background: 'var(--primary-light)' }}
+                >
+                  <SparkleIcon size={22} color="var(--primary)" />
+                </div>
+                <div>
+                  <p className="font-semibold text-sm mb-1" style={{ color: 'var(--text)' }}>
+                    What can I help with?
+                  </p>
+                  <p className="text-xs" style={{ color: 'var(--text-2)' }}>
+                    Ask me to add, move, or update cards.
+                  </p>
+                </div>
+                <div className="flex flex-col gap-1.5 w-full mt-1">
+                  {SUGGESTIONS.map(s => (
+                    <button
+                      key={s}
+                      onClick={() => setInput(s)}
+                      className="text-left text-xs px-3 py-2.5 rounded-lg transition-colors font-medium"
+                      style={{
+                        background: 'var(--surface)',
+                        color: 'var(--text-2)',
+                        border: '1px solid var(--border)',
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.borderColor = 'var(--primary-mid)';
+                        e.currentTarget.style.color = 'var(--primary)';
+                        e.currentTarget.style.background = 'var(--primary-light)';
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.borderColor = 'var(--border)';
+                        e.currentTarget.style.color = 'var(--text-2)';
+                        e.currentTarget.style.background = 'var(--surface)';
+                      }}
+                    >
+                      {s}
+                    </button>
+                  ))}
                 </div>
               </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
+            )}
 
-        <form onSubmit={handleSend} className="border-t border-[var(--stroke)] bg-white p-4">
-          <div className="flex gap-2">
+            {messages.map((msg, i) => (
+              <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                {msg.role === "assistant" && (
+                  <div
+                    className="h-6 w-6 rounded-full flex items-center justify-center shrink-0 mr-2 mt-0.5"
+                    style={{ background: 'var(--primary-light)' }}
+                  >
+                    <SparkleIcon size={12} color="var(--primary)" />
+                  </div>
+                )}
+                <div
+                  className="max-w-[82%] rounded-2xl px-3.5 py-2.5 text-sm leading-[1.5]"
+                  style={msg.role === "user"
+                    ? { background: 'var(--primary)', color: '#fff', borderBottomRightRadius: 6 }
+                    : { background: 'var(--surface)', color: 'var(--text)', border: '1px solid var(--border)', borderBottomLeftRadius: 6, boxShadow: 'var(--shadow-sm)' }
+                  }
+                >
+                  {msg.content}
+                </div>
+              </div>
+            ))}
+
+            {isLoading && (
+              <div className="flex justify-start">
+                <div
+                  className="h-6 w-6 rounded-full flex items-center justify-center shrink-0 mr-2 mt-0.5"
+                  style={{ background: 'var(--primary-light)' }}
+                >
+                  <SparkleIcon size={12} color="var(--primary)" />
+                </div>
+                <div
+                  className="px-4 py-3 rounded-2xl ai-dots"
+                  style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderBottomLeftRadius: 6 }}
+                >
+                  <span /><span /><span />
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Input */}
+          <form
+            onSubmit={handleSend}
+            className="flex gap-2 px-3 py-3 shrink-0"
+            style={{ borderTop: '1px solid var(--border)', background: 'var(--surface)' }}
+          >
             <input
               type="text"
               value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="E.g. Add a bug task in To Do..."
-              className="flex-1 rounded-xl border border-[var(--stroke)] bg-[var(--surface)] px-4 py-2.5 text-sm outline-none focus:border-[var(--primary-blue)]"
+              onChange={e => setInput(e.target.value)}
+              placeholder="Ask AI to update your board…"
+              className="field-input flex-1 text-sm"
+              style={{ padding: '9px 14px', borderRadius: 10 }}
               disabled={isLoading}
             />
             <button
               type="submit"
               disabled={!input.trim() || isLoading}
-              className="flex items-center justify-center rounded-xl bg-[var(--accent-yellow)] px-4 py-2.5 font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+              className="btn btn-primary btn-sm"
+              style={{ borderRadius: 10, paddingLeft: 16, paddingRight: 16 }}
             >
               Send
             </button>
-          </div>
-        </form>
-      </div>
+          </form>
+        </div>
+      )}
     </>
+  );
+}
+
+function SparkleIcon({ size = 20, color = "#fff" }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <path
+        d="M12 2l2.4 7.2H22l-6.2 4.5 2.4 7.2L12 16.5 5.8 20.9l2.4-7.2L2 9.2h7.6L12 2z"
+        fill={color}
+      />
+    </svg>
   );
 }

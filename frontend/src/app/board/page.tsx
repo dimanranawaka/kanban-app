@@ -26,8 +26,8 @@ function BoardPageInner() {
 
   if (!ready || !boardId) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[var(--surface)] to-[var(--surface-strong)]">
-        <div className="h-12 w-12 rounded-full border-4 border-[var(--stroke)] border-t-[var(--primary-blue)] animate-spin" />
+      <div className="flex min-h-screen items-center justify-center" style={{ background: 'var(--bg)' }}>
+        <div className="spinner" />
       </div>
     );
   }
@@ -39,8 +39,8 @@ export default function BoardPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[var(--surface)] to-[var(--surface-strong)]">
-          <div className="h-12 w-12 rounded-full border-4 border-[var(--stroke)] border-t-[var(--primary-blue)] animate-spin" />
+        <div className="flex min-h-screen items-center justify-center" style={{ background: 'var(--bg)' }}>
+          <div className="spinner" />
         </div>
       }
     >

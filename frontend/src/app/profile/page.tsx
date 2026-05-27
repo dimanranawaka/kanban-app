@@ -37,10 +37,7 @@ export default function ProfilePage() {
     e.preventDefault();
     setSaving(true);
     try {
-      const updated = await updateUserProfile({
-        display_name: displayName || undefined,
-        email: email || undefined,
-      });
+      const updated = await updateUserProfile({ display_name: displayName || undefined, email: email || undefined });
       setProfile(updated);
       toast.success('Profile updated');
     } catch (err) {
@@ -52,17 +49,12 @@ export default function ProfilePage() {
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newPassword !== confirmPassword) {
-      toast.error('New passwords do not match');
-      return;
-    }
+    if (newPassword !== confirmPassword) { toast.error('Passwords do not match'); return; }
     setSaving(true);
     try {
       await updateUserProfile({ current_password: currentPassword, new_password: newPassword });
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-      toast.success('Password changed successfully');
+      setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
+      toast.success('Password changed');
     } catch (err) {
       toast.error((err as Error).message || 'Failed to change password');
     } finally {
@@ -72,145 +64,193 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[var(--surface)] to-[var(--surface-strong)]">
-        <div className="h-12 w-12 rounded-full border-4 border-[var(--stroke)] border-t-[var(--primary-blue)] animate-spin" />
+      <div className="flex min-h-screen items-center justify-center" style={{ background: 'var(--bg)' }}>
+        <div className="spinner" />
       </div>
     );
   }
 
+  const initials = (profile?.display_name ?? profile?.username ?? 'U')[0].toUpperCase();
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[var(--surface)] to-[var(--surface-strong)]">
-      <main className="mx-auto max-w-2xl px-6 py-10">
-        {/* Back nav */}
+    <div className="min-h-screen" style={{ background: 'var(--bg)' }}>
+      {/* Nav */}
+      <nav className="app-nav">
         <button
           onClick={() => router.push('/')}
-          className="mb-6 flex items-center gap-2 text-sm font-medium text-[var(--gray-text)] hover:text-[var(--primary-blue)] transition"
+          className="flex items-center gap-2 text-sm transition-colors rounded-lg px-2 py-1.5"
+          style={{ color: 'var(--text-2)' }}
+          onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-2)')}
+          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
-          Back to Boards
+          Boards
         </button>
+        <div className="h-5 w-px" style={{ background: 'var(--border)' }} />
+        <span className="font-display text-sm font-bold" style={{ color: 'var(--text)' }}>
+          Profile
+        </span>
+      </nav>
 
-        <div className="space-y-6">
-          {/* Profile header */}
-          <div className="rounded-2xl border border-[var(--stroke)]/50 bg-white/80 backdrop-blur-sm p-6 shadow-sm">
-            <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-full bg-gradient-to-br from-[var(--primary-blue)] to-[var(--secondary-purple)] flex items-center justify-center text-white text-2xl font-bold shadow-lg">
-                {(profile?.display_name ?? profile?.username ?? 'U')[0].toUpperCase()}
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-[var(--navy-dark)]">
-                  {profile?.display_name ?? profile?.username}
-                </h1>
-                <p className="text-sm text-[var(--gray-text)]">@{profile?.username}</p>
-                <p className="text-xs text-[var(--gray-text)] mt-1">
-                  Member since {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : '—'}
-                </p>
-              </div>
-            </div>
+      <main className="mx-auto max-w-xl px-4 sm:px-6 py-8 sm:py-10 space-y-4">
+        {/* Avatar + info */}
+        <div
+          className="rounded-xl p-6 flex items-center gap-5 animate-fade-up"
+          style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}
+        >
+          <div
+            className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl font-display text-2xl font-bold"
+            style={{ background: 'var(--primary)', color: '#fff' }}
+          >
+            {initials}
           </div>
-
-          {/* Edit profile */}
-          <div className="rounded-2xl border border-[var(--stroke)]/50 bg-white/80 backdrop-blur-sm p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-[var(--navy-dark)] mb-4">Edit Profile</h2>
-            <form onSubmit={handleSaveProfile} className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-[var(--navy-dark)] block mb-1">Username</label>
-                <input
-                  value={profile?.username ?? ''}
-                  disabled
-                  className="w-full rounded-lg border border-[var(--stroke)] bg-gray-50 px-3 py-2 text-sm text-[var(--gray-text)]"
-                />
-                <p className="text-xs text-[var(--gray-text)] mt-1">Username cannot be changed</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-[var(--navy-dark)] block mb-1">Display Name</label>
-                <input
-                  value={displayName}
-                  onChange={e => setDisplayName(e.target.value)}
-                  placeholder="Your full name"
-                  className="w-full rounded-lg border border-[var(--stroke)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-blue)]"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-[var(--navy-dark)] block mb-1">Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  className="w-full rounded-lg border border-[var(--stroke)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-blue)]"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={saving}
-                className="w-full rounded-lg bg-[var(--primary-blue)] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition disabled:opacity-50"
-              >
-                {saving ? 'Saving...' : 'Save Profile'}
-              </button>
-            </form>
-          </div>
-
-          {/* Change password */}
-          <div className="rounded-2xl border border-[var(--stroke)]/50 bg-white/80 backdrop-blur-sm p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-[var(--navy-dark)] mb-4">Change Password</h2>
-            <form onSubmit={handleChangePassword} className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-[var(--navy-dark)] block mb-1">Current Password</label>
-                <input
-                  type="password"
-                  value={currentPassword}
-                  onChange={e => setCurrentPassword(e.target.value)}
-                  required
-                  className="w-full rounded-lg border border-[var(--stroke)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-blue)]"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-[var(--navy-dark)] block mb-1">New Password</label>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={e => setNewPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  className="w-full rounded-lg border border-[var(--stroke)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-blue)]"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-[var(--navy-dark)] block mb-1">Confirm New Password</label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={e => setConfirmPassword(e.target.value)}
-                  required
-                  className="w-full rounded-lg border border-[var(--stroke)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary-blue)]"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={saving}
-                className="w-full rounded-lg bg-gradient-to-r from-[var(--primary-blue)] to-[var(--secondary-purple)] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition disabled:opacity-50"
-              >
-                {saving ? 'Updating...' : 'Change Password'}
-              </button>
-            </form>
-          </div>
-
-          {/* Danger zone */}
-          <div className="rounded-2xl border border-red-200 bg-red-50/50 p-6">
-            <h2 className="text-lg font-bold text-red-700 mb-2">Sign Out</h2>
-            <p className="text-sm text-red-600 mb-4">Sign out of your account on this device.</p>
-            <button
-              onClick={() => void logout()}
-              className="rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 transition"
-            >
-              Log Out
-            </button>
+          <div>
+            <h1 className="font-display text-xl font-bold" style={{ color: 'var(--text)' }}>
+              {profile?.display_name ?? profile?.username}
+            </h1>
+            <p className="text-sm mt-0.5" style={{ color: 'var(--text-2)' }}>
+              @{profile?.username}
+            </p>
+            <p className="text-xs mt-1" style={{ color: 'var(--text-3)' }}>
+              Member since {profile?.created_at
+                ? new Date(profile.created_at).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+                : '—'}
+            </p>
           </div>
         </div>
+
+        {/* Edit profile */}
+        <SectionCard title="Edit Profile" delay="0.06s">
+          <form onSubmit={handleSaveProfile} className="space-y-4">
+            <Field label="Username">
+              <input
+                value={profile?.username ?? ''}
+                disabled
+                className="field-input"
+                style={{ opacity: 0.5, cursor: 'not-allowed' }}
+              />
+              <p className="text-xs mt-1" style={{ color: 'var(--text-3)' }}>
+                Username cannot be changed
+              </p>
+            </Field>
+            <Field label="Display Name">
+              <input
+                value={displayName}
+                onChange={e => setDisplayName(e.target.value)}
+                placeholder="Your name"
+                className="field-input"
+              />
+            </Field>
+            <Field label="Email">
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                className="field-input"
+              />
+            </Field>
+            <button type="submit" disabled={saving} className="btn btn-primary w-full mt-1">
+              {saving ? <><span className="spinner-sm" />Saving…</> : 'Save Profile'}
+            </button>
+          </form>
+        </SectionCard>
+
+        {/* Change password */}
+        <SectionCard title="Change Password" delay="0.10s">
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            <Field label="Current Password">
+              <input
+                type="password"
+                value={currentPassword}
+                onChange={e => setCurrentPassword(e.target.value)}
+                required
+                className="field-input"
+              />
+            </Field>
+            <Field label="New Password">
+              <input
+                type="password"
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                required
+                minLength={6}
+                className="field-input"
+              />
+            </Field>
+            <Field label="Confirm New Password">
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                required
+                className="field-input"
+              />
+            </Field>
+            <button type="submit" disabled={saving} className="btn btn-primary w-full mt-1">
+              {saving ? <><span className="spinner-sm" />Updating…</> : 'Change Password'}
+            </button>
+          </form>
+        </SectionCard>
+
+        {/* Sign out */}
+        <div
+          className="rounded-xl p-5 animate-fade-up"
+          style={{
+            background: 'rgba(220, 38, 38, 0.03)',
+            border: '1.5px solid rgba(220, 38, 38, 0.12)',
+            animationDelay: '0.14s',
+          }}
+        >
+          <h2 className="font-display text-sm font-bold mb-1" style={{ color: 'var(--danger)' }}>
+            Sign Out
+          </h2>
+          <p className="text-sm mb-4" style={{ color: 'var(--text-2)' }}>
+            Sign out of your account on this device.
+          </p>
+          <button
+            onClick={() => void logout()}
+            className="btn btn-danger-ghost btn-sm"
+            style={{ border: '1.5px solid rgba(220,38,38,0.25)' }}
+          >
+            Log Out
+          </button>
+        </div>
       </main>
+    </div>
+  );
+}
+
+function SectionCard({ title, children, delay = '0s' }: {
+  title: string; children: React.ReactNode; delay?: string;
+}) {
+  return (
+    <div
+      className="rounded-xl p-6 animate-fade-up"
+      style={{
+        background: 'var(--surface)',
+        border: '1.5px solid var(--border)',
+        boxShadow: 'var(--shadow-sm)',
+        animationDelay: delay,
+      }}
+    >
+      <h2 className="font-display text-base font-bold mb-5" style={{ color: 'var(--text)' }}>
+        {title}
+      </h2>
+      {children}
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="block text-sm font-semibold" style={{ color: 'var(--text)' }}>
+        {label}
+      </label>
+      {children}
     </div>
   );
 }

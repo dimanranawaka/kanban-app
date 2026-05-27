@@ -1,18 +1,26 @@
 import type { Card } from "@/lib/kanban";
 
-type KanbanCardPreviewProps = {
-  card: Card;
-};
+type KanbanCardPreviewProps = { card: Card };
 
 export const KanbanCardPreview = ({ card }: KanbanCardPreviewProps) => (
-  <article className="rounded-xl border border-[var(--stroke)]/50 bg-white px-5 py-4 shadow-xl ring-2 ring-[var(--primary-blue)] opacity-90">
-    <div className="space-y-3">
-      <h4 className="font-display text-base font-bold text-[var(--navy-dark)] line-clamp-2">
-        {card.title}
-      </h4>
-      <p className="text-sm leading-5 text-[var(--gray-text)] line-clamp-3">
+  <article
+    className="rounded-xl px-4 py-3.5"
+    style={{
+      background: 'var(--surface)',
+      border: '2px solid var(--primary)',
+      boxShadow: 'var(--shadow-xl)',
+    }}
+  >
+    <h4
+      className="font-display font-semibold text-sm line-clamp-2 mb-1"
+      style={{ color: 'var(--text)' }}
+    >
+      {card.title}
+    </h4>
+    {card.details && (
+      <p className="text-xs line-clamp-2 leading-[1.5]" style={{ color: 'var(--text-2)' }}>
         {card.details}
       </p>
-    </div>
+    )}
   </article>
 );

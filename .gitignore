@@ -178,3 +178,5 @@ cython_debug/
 /data/
 
 .claude/
+.agents/
+skills-lock.json

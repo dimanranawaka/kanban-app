@@ -27,11 +27,8 @@ export default function LoginRoute() {
 
   if (checking) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[var(--surface)] to-[var(--surface-strong)]">
-        <div className="text-center">
-          <div className="h-12 w-12 rounded-full border-4 border-[var(--stroke)] border-t-[var(--primary-blue)] animate-spin mx-auto mb-4" />
-          <p className="text-[var(--gray-text)]">Loading...</p>
-        </div>
+      <div className="flex min-h-screen items-center justify-center" style={{ background: 'var(--bg)' }}>
+        <div className="spinner" />
       </div>
     );
   }
